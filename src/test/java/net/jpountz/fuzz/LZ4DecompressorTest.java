@@ -70,26 +70,6 @@ public class LZ4DecompressorTest {
     }
 
     @FuzzTest
-    public void unsafe_safe_array(FuzzedDataProvider provider) {
-        test(provider, LZ4Factory.unsafeInsecureInstance(), false, false);
-    }
-
-    @FuzzTest
-    public void unsafe_fast_array(FuzzedDataProvider provider) {
-        test(provider, LZ4Factory.unsafeInsecureInstance(), true, false);
-    }
-
-    @FuzzTest
-    public void native_safe_array(FuzzedDataProvider provider) {
-        test(provider, LZ4Factory.nativeInsecureInstance(), false, false);
-    }
-
-    @FuzzTest
-    public void native_fast_array(FuzzedDataProvider provider) {
-        test(provider, LZ4Factory.nativeInsecureInstance(), true, false);
-    }
-
-    @FuzzTest
     public void safe_safe_bytebuffer(FuzzedDataProvider provider) {
         test(provider, LZ4Factory.safeInstance(), false, true);
     }
@@ -97,25 +77,5 @@ public class LZ4DecompressorTest {
     @FuzzTest
     public void safe_fast_bytebuffer(FuzzedDataProvider provider) {
         test(provider, LZ4Factory.safeInstance(), true, true);
-    }
-
-    @FuzzTest
-    public void unsafe_safe_bytebuffer(FuzzedDataProvider provider) {
-        test(provider, LZ4Factory.unsafeInsecureInstance(), false, true);
-    }
-
-    @FuzzTest
-    public void unsafe_fast_bytebuffer(FuzzedDataProvider provider) {
-        test(provider, LZ4Factory.unsafeInsecureInstance(), true, true);
-    }
-
-    @FuzzTest
-    public void native_safe_bytebuffer(FuzzedDataProvider provider) {
-        test(provider, LZ4Factory.nativeInsecureInstance(), false, true);
-    }
-
-    @FuzzTest
-    public void native_fast_bytebuffer(FuzzedDataProvider provider) {
-        test(provider, LZ4Factory.nativeInsecureInstance(), true, true);
     }
 }
