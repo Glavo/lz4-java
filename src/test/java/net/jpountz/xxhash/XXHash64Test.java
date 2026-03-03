@@ -76,20 +76,8 @@ public class XXHash64Test extends AbstractLZ4Test {
 
     }
 
-    private static XXHash64[] INSTANCES = new XXHash64[]{
-            XXHashFactory.nativeInstance().hash64(),
-            XXHashFactory.unsafeInstance().hash64(),
+    private static final XXHash64[] INSTANCES = new XXHash64[]{
             XXHashFactory.safeInstance().hash64(),
-            new StreamingXXHash64Adapter() {
-                protected StreamingXXHash64 streamingHash(long seed) {
-                    return XXHashFactory.nativeInstance().newStreamingHash64(seed);
-                }
-            },
-            new StreamingXXHash64Adapter() {
-                protected StreamingXXHash64 streamingHash(long seed) {
-                    return XXHashFactory.unsafeInstance().newStreamingHash64(seed);
-                }
-            },
             new StreamingXXHash64Adapter() {
                 protected StreamingXXHash64 streamingHash(long seed) {
                     return XXHashFactory.safeInstance().newStreamingHash64(seed);
