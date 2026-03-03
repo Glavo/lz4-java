@@ -24,7 +24,6 @@ import java.util.stream.LongStream;
 import net.jpountz.RandomContext;
 import net.jpountz.util.SafeUtils;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -113,7 +112,6 @@ public class XXHash32Test {
 
     @ParameterizedTest
     @MethodSource("randomSeeds")
-    @Disabled
     public void testInstances(long randomSeed) {
         var context = new RandomContext(randomSeed);
 
@@ -124,7 +122,7 @@ public class XXHash32Test {
         final int off = context.nextInt(Math.max(1, bufLen));
         final int len = context.nextInt(bufLen - off + 1);
 
-        final int ref = XXHashFactory.nativeInstance().hash32().hash(buf, off, len, seed);
+        final int ref = XXHash.XXH32(ByteBuffer.allocateDirect(len).put(buf, off, len).flip(), seed);
         for (var provider : PROVIDERS) {
             var hash = provider.apply(context);
             final int h = hash.hash(buf, off, len, seed);

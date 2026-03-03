@@ -122,7 +122,7 @@ public class XXHash64Test {
         final int off = context.nextInt(0, Math.max(1, bufLen));
         final int len = context.nextInt(bufLen - off + 1);
 
-        final long ref = XXHashFactory.nativeInstance().hash64().hash(buf, off, len, seed);
+        final long ref = XXHash.XXH64(ByteBuffer.allocateDirect(len).put(buf, off, len).flip(), seed);
         for (var provider : PROVIDERS) {
             var hash = provider.apply(context);
             final long h = hash.hash(buf, off, len, seed);
