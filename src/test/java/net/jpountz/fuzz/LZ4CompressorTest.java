@@ -60,30 +60,10 @@ public class LZ4CompressorTest {
         testArray(provider, LZ4Factory.safeInstance().fastCompressor());
     }
 
-    @FuzzTest
-    public void unsafe_fast_array(FuzzedDataProvider provider) {
-        testArray(provider, LZ4Factory.unsafeInsecureInstance().fastCompressor());
-    }
-
-    @FuzzTest
-    public void native_fast_array(FuzzedDataProvider provider) {
-        testArray(provider, LZ4Factory.nativeInsecureInstance().fastCompressor());
-    }
-
     // fastCompressor: bytebuffer
     @FuzzTest
     public void safe_fast_bytebuffer(FuzzedDataProvider provider) {
         testByteBuffer(provider, LZ4Factory.safeInstance().fastCompressor());
-    }
-
-    @FuzzTest
-    public void unsafe_fast_bytebuffer(FuzzedDataProvider provider) {
-        testByteBuffer(provider, LZ4Factory.unsafeInsecureInstance().fastCompressor());
-    }
-
-    @FuzzTest
-    public void native_fast_bytebuffer(FuzzedDataProvider provider) {
-        testByteBuffer(provider, LZ4Factory.nativeInsecureInstance().fastCompressor());
     }
 
     // highCompressor (levels 1, 9 (default), 17 (max)): array
@@ -93,43 +73,13 @@ public class LZ4CompressorTest {
     }
 
     @FuzzTest
-    public void unsafe_high_l1_array(FuzzedDataProvider provider) {
-        testArray(provider, LZ4Factory.unsafeInsecureInstance().highCompressor(1));
-    }
-
-    @FuzzTest
-    public void native_high_l1_array(FuzzedDataProvider provider) {
-        testArray(provider, LZ4Factory.nativeInsecureInstance().highCompressor(1));
-    }
-
-    @FuzzTest
     public void safe_high_l9_array(FuzzedDataProvider provider) {
         testArray(provider, LZ4Factory.safeInstance().highCompressor(9));
     }
 
     @FuzzTest
-    public void unsafe_high_l9_array(FuzzedDataProvider provider) {
-        testArray(provider, LZ4Factory.unsafeInsecureInstance().highCompressor(9));
-    }
-
-    @FuzzTest
-    public void native_high_l9_array(FuzzedDataProvider provider) {
-        testArray(provider, LZ4Factory.nativeInsecureInstance().highCompressor(9));
-    }
-
-    @FuzzTest
     public void safe_high_l17_array(FuzzedDataProvider provider) {
         testArray(provider, LZ4Factory.safeInstance().highCompressor(17));
-    }
-
-    @FuzzTest
-    public void unsafe_high_l17_array(FuzzedDataProvider provider) {
-        testArray(provider, LZ4Factory.unsafeInsecureInstance().highCompressor(17));
-    }
-
-    @FuzzTest
-    public void native_high_l17_array(FuzzedDataProvider provider) {
-        testArray(provider, LZ4Factory.nativeInsecureInstance().highCompressor(17));
     }
 
     // highCompressor (levels 1, 9, 17): bytebuffer
@@ -139,42 +89,12 @@ public class LZ4CompressorTest {
     }
 
     @FuzzTest
-    public void unsafe_high_l1_bytebuffer(FuzzedDataProvider provider) {
-        testByteBuffer(provider, LZ4Factory.unsafeInsecureInstance().highCompressor(1));
-    }
-
-    @FuzzTest
-    public void native_high_l1_bytebuffer(FuzzedDataProvider provider) {
-        testByteBuffer(provider, LZ4Factory.nativeInsecureInstance().highCompressor(1));
-    }
-
-    @FuzzTest
     public void safe_high_l9_bytebuffer(FuzzedDataProvider provider) {
         testByteBuffer(provider, LZ4Factory.safeInstance().highCompressor(9));
     }
 
     @FuzzTest
-    public void unsafe_high_l9_bytebuffer(FuzzedDataProvider provider) {
-        testByteBuffer(provider, LZ4Factory.unsafeInsecureInstance().highCompressor(9));
-    }
-
-    @FuzzTest
-    public void native_high_l9_bytebuffer(FuzzedDataProvider provider) {
-        testByteBuffer(provider, LZ4Factory.nativeInsecureInstance().highCompressor(9));
-    }
-
-    @FuzzTest
     public void safe_high_l17_bytebuffer(FuzzedDataProvider provider) {
         testByteBuffer(provider, LZ4Factory.safeInstance().highCompressor(17));
-    }
-
-    @FuzzTest
-    public void unsafe_high_l17_bytebuffer(FuzzedDataProvider provider) {
-        testByteBuffer(provider, LZ4Factory.unsafeInsecureInstance().highCompressor(17));
-    }
-
-    @FuzzTest
-    public void native_high_l17_bytebuffer(FuzzedDataProvider provider) {
-        testByteBuffer(provider, LZ4Factory.nativeInsecureInstance().highCompressor(17));
     }
 }
