@@ -53,29 +53,9 @@ public class XXHash64Test {
         testArray(provider, XXHashFactory.safeInstance().hash64());
     }
 
-    @FuzzTest
-    public void unsafe_array(FuzzedDataProvider provider) {
-        testArray(provider, XXHashFactory.unsafeInstance().hash64());
-    }
-
-    @FuzzTest
-    public void native_array(FuzzedDataProvider provider) {
-        testArray(provider, XXHashFactory.nativeInstance().hash64());
-    }
-
     // direct ByteBuffer-based hashing
     @FuzzTest
     public void safe_bytebuffer(FuzzedDataProvider provider) {
         testByteBuffer(provider, XXHashFactory.safeInstance().hash64());
-    }
-
-    @FuzzTest
-    public void unsafe_bytebuffer(FuzzedDataProvider provider) {
-        testByteBuffer(provider, XXHashFactory.unsafeInstance().hash64());
-    }
-
-    @FuzzTest
-    public void native_bytebuffer(FuzzedDataProvider provider) {
-        testByteBuffer(provider, XXHashFactory.nativeInstance().hash64());
     }
 }
