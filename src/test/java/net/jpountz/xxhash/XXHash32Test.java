@@ -74,7 +74,7 @@ public class XXHash32Test {
     );
 
     private static LongStream randomSeeds() {
-        return LongStream.range(0, 20);
+        return LongStream.range(0, 40);
     }
 
     @ParameterizedTest
