@@ -12,17 +12,6 @@ import static java.lang.Integer.rotateLeft;
  */
 final class StreamingXXHash32JavaSafe extends AbstractStreamingXXHash32Java {
 
-    static class Factory implements StreamingXXHash32.Factory {
-
-        public static final StreamingXXHash32.Factory INSTANCE = new Factory();
-
-        @Override
-        public StreamingXXHash32 newStreamingHash(int seed) {
-            return new StreamingXXHash32JavaSafe(seed);
-        }
-
-    }
-
     StreamingXXHash32JavaSafe(int seed) {
         super(seed);
     }

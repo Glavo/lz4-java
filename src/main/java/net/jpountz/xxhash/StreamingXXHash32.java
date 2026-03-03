@@ -42,13 +42,7 @@ import java.io.Closeable;
  */
 public abstract class StreamingXXHash32 implements Closeable {
 
-    interface Factory {
-
-        StreamingXXHash32 newStreamingHash(int seed);
-
-    }
-
-    final int seed;
+  final int seed;
 
     StreamingXXHash32(int seed) {
         this.seed = seed;
