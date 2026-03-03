@@ -24,6 +24,9 @@ tasks.withType<JavaCompile> {
     options.release.set(11)
 }
 
+val testTempDir = layout.buildDirectory.dir("test-tmp")
+
 tasks.test {
     useJUnitPlatform()
+    systemProperty("net.jpountz.lz4.test.tempDir", testTempDir.get().asFile.absolutePath)
 }

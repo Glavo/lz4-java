@@ -43,6 +43,8 @@ import java.util.List;
 import java.util.Random;
 import java.util.stream.Stream;
 
+import static org.junit.jupiter.api.Assertions.fail;
+
 public class LZ4FrameIOStreamTest {
     private static void copy(InputStream in, OutputStream out) throws IOException {
         final byte[] buffer = new byte[1 << 10];
@@ -80,10 +82,27 @@ public class LZ4FrameIOStreamTest {
         return retval.stream();
     }
 
+    private static Path tempDir;
+
+    @BeforeAll
+    public static void setupTempDir() throws IOException {
+        String property = System.getProperty("net.jpountz.lz4.test.tempDir");
+        if (property == null) {
+            fail("net.jpountz.lz4.test.tempDir property not set");
+        }
+
+        tempDir = Path.of(property);
+        Files.createDirectories(tempDir);
+    }
+
+    private static Path createTempFile(String prefix, String suffix) throws IOException {
+        return Files.createTempFile(tempDir, prefix, suffix);
+    }
+
     Path tmpFile = null;
 
     private void setUp(int testSize) throws IOException {
-        tmpFile = Files.createTempFile("lz4ioTest", ".dat");
+        tmpFile = createTempFile("lz4ioTest", ".dat");
         final Random rnd = new Random(5378L);
         int sizeRemaining = testSize;
         try (OutputStream os = Files.newOutputStream(tmpFile)) {
@@ -122,7 +141,7 @@ public class LZ4FrameIOStreamTest {
 
         // Check if this is running in CI (env CI=true), see https://docs.github.com/en/actions/reference/workflows-and-actions/variables#default-environment-variables
         if (!hasLz4CLI && "true".equals(System.getenv("CI"))) {
-            Assertions.fail("LZ4 CLI is not available, but should be for CI run");
+            fail("LZ4 CLI is not available, but should be for CI run");
         }
     }
 
@@ -176,7 +195,7 @@ public class LZ4FrameIOStreamTest {
         try (InputStream is = Files.newInputStream(tmpFile)) {
             validateStreamEquals(is, tmpFile);
         }
-        final Path file = Files.createTempFile("copyTmp", ".dat");
+        final Path file = createTempFile("copyTmp", ".dat");
         try {
             try (InputStream is = Files.newInputStream(tmpFile)) {
                 try (OutputStream os = Files.newOutputStream(file)) {
@@ -195,7 +214,7 @@ public class LZ4FrameIOStreamTest {
     @MethodSource("testSizes")
     public void testOutputSimple(int testSize) throws IOException {
         setUp(testSize);
-        final Path lz4File = Files.createTempFile("lz4test", ".lz4");
+        final Path lz4File = createTempFile("lz4test", ".lz4");
         try {
             try (OutputStream os = new LZ4FrameOutputStream(Files.newOutputStream(lz4File))) {
                 try (InputStream is = Files.newInputStream(tmpFile)) {
@@ -226,7 +245,7 @@ public class LZ4FrameIOStreamTest {
     @MethodSource("testSizes")
     public void testInputOutputSimple(int testSize) throws IOException {
         setUp(testSize);
-        final Path lz4File = Files.createTempFile("lz4test", ".lz4");
+        final Path lz4File = createTempFile("lz4test", ".lz4");
         try {
             try (OutputStream os = new LZ4FrameOutputStream(Files.newOutputStream(lz4File))) {
                 try (InputStream is = Files.newInputStream(tmpFile)) {
@@ -245,7 +264,7 @@ public class LZ4FrameIOStreamTest {
     @MethodSource("testSizes")
     public void testInputOutputWithPerByteReadWrite(int testSize) throws IOException {
         setUp(testSize);
-        final Path lz4File = Files.createTempFile("lz4test", ".lz4");
+        final Path lz4File = createTempFile("lz4test", ".lz4");
         try {
             try (OutputStream os = new LZ4FrameOutputStream(Files.newOutputStream(lz4File))) {
                 try (InputStream is = Files.newInputStream(tmpFile)) {
@@ -264,7 +283,7 @@ public class LZ4FrameIOStreamTest {
     @MethodSource("testSizes")
     public void testInputOutputSkipped(int testSize) throws IOException {
         setUp(testSize);
-        final Path lz4File = Files.createTempFile("lz4test", ".lz4");
+        final Path lz4File = createTempFile("lz4test", ".lz4");
         try {
             try (OutputStream fos = Files.newOutputStream(lz4File)) {
                 final int skipSize = 1 << 10;
@@ -293,7 +312,7 @@ public class LZ4FrameIOStreamTest {
     @MethodSource("testSizes")
     public void testSkippableOnly(int testSize) throws IOException {
         setUp(testSize);
-        final Path lz4File = Files.createTempFile("lz4test", ".lz4");
+        final Path lz4File = createTempFile("lz4test", ".lz4");
         try {
             try (OutputStream fos = Files.newOutputStream(lz4File)) {
                 final int skipSize = 1 << 10;
@@ -321,7 +340,7 @@ public class LZ4FrameIOStreamTest {
     @MethodSource("testSizes")
     public void testStreamWithContentSize(int testSize) throws IOException {
         setUp(testSize);
-        final Path lz4File = Files.createTempFile("lz4test", ".lz4");
+        final Path lz4File = createTempFile("lz4test", ".lz4");
         try {
             final long knownSize = Files.size(tmpFile);
             try (OutputStream os = new LZ4FrameOutputStream(Files.newOutputStream(lz4File),
@@ -348,7 +367,7 @@ public class LZ4FrameIOStreamTest {
     @MethodSource("testSizes")
     public void testStreamWithoutContentSize(int testSize) throws IOException {
         setUp(testSize);
-        final Path lz4File = Files.createTempFile("lz4test", ".lz4");
+        final Path lz4File = createTempFile("lz4test", ".lz4");
         try {
             try (OutputStream os = new LZ4FrameOutputStream(Files.newOutputStream(lz4File),
                     LZ4FrameOutputStream.BLOCKSIZE.SIZE_4MB,
@@ -372,7 +391,7 @@ public class LZ4FrameIOStreamTest {
     @MethodSource("testSizes")
     public void testInputOutputWithBlockChecksum(int testSize) throws IOException {
         setUp(testSize);
-        final Path lz4File = Files.createTempFile("lz4test", ".lz4");
+        final Path lz4File = createTempFile("lz4test", ".lz4");
         try {
             try (OutputStream os = new LZ4FrameOutputStream(Files.newOutputStream(lz4File),
                     LZ4FrameOutputStream.BLOCKSIZE.SIZE_64KB,
@@ -394,7 +413,7 @@ public class LZ4FrameIOStreamTest {
     @MethodSource("testSizes")
     public void testInputOutputMultipleFrames(int testSize) throws IOException {
         setUp(testSize);
-        final Path lz4File = Files.createTempFile("lz4test", ".lz4");
+        final Path lz4File = createTempFile("lz4test", ".lz4");
         try {
             try (OutputStream os = new LZ4FrameOutputStream(Files.newOutputStream(lz4File))) {
                 try (InputStream is = Files.newInputStream(tmpFile)) {
@@ -447,7 +466,7 @@ public class LZ4FrameIOStreamTest {
     }
 
     private void nativeCompress(String... args) throws IOException, InterruptedException {
-        final Path lz4File = Files.createTempFile("lz4test", ".lz4");
+        final Path lz4File = createTempFile("lz4test", ".lz4");
         Files.deleteIfExists(lz4File);
         try {
             final ProcessBuilder builder = new ProcessBuilder();
@@ -500,8 +519,8 @@ public class LZ4FrameIOStreamTest {
     public void testNativeDecompressIfAvailable(int testSize) throws IOException, InterruptedException {
         setUp(testSize);
         Assumptions.assumeTrue(hasLz4CLI);
-        final Path lz4File = Files.createTempFile("lz4test", ".lz4");
-        final Path unCompressedFile = Files.createTempFile("lz4raw", ".dat");
+        final Path lz4File = createTempFile("lz4test", ".lz4");
+        final Path unCompressedFile = createTempFile("lz4raw", ".dat");
         Files.deleteIfExists(unCompressedFile);
         Files.deleteIfExists(lz4File);
         try {
@@ -550,7 +569,7 @@ public class LZ4FrameIOStreamTest {
             Assertions.assertThrows(IOException.class, is::read);
         }
 
-        final Path lz4File = Files.createTempFile("lz4test", ".lz4");
+        final Path lz4File = createTempFile("lz4test", ".lz4");
         try {
             try (OutputStream os = new LZ4FrameOutputStream(Files.newOutputStream(lz4File))) {
                 try (InputStream is = Files.newInputStream(tmpFile)) {
@@ -571,7 +590,7 @@ public class LZ4FrameIOStreamTest {
     @MethodSource("testSizes")
     public void testAvailable(int testSize) throws IOException {
         setUp(testSize);
-        final Path lz4File = Files.createTempFile("lz4test", ".lz4");
+        final Path lz4File = createTempFile("lz4test", ".lz4");
         try {
             try (OutputStream os = new LZ4FrameOutputStream(Files.newOutputStream(lz4File))) {
                 try (InputStream is = Files.newInputStream(tmpFile)) {
