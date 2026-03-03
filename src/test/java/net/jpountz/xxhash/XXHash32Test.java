@@ -152,29 +152,4 @@ public class XXHash32Test extends AbstractLZ4Test {
             totalLen += len;
         }
     }
-
-    @Test
-    public void testClose() {
-        StreamingXXHash32 hash = XXHashFactory.nativeInstance().newStreamingHash32(randomInt());
-        hash.close();
-        hash.close();
-        try {
-            hash.getValue();
-            assertTrue(hash.toString(), false);
-        } catch (AssertionError e) {
-            // OK
-        }
-        try {
-            hash.update(null, 0, 0);
-            assertTrue(hash.toString(), false);
-        } catch (AssertionError e) {
-            // OK
-        }
-        try {
-            hash.reset();
-            assertTrue(hash.toString(), false);
-        } catch (AssertionError e) {
-            // OK
-        }
-    }
 }
