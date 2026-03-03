@@ -16,7 +16,6 @@ package net.jpountz.xxhash;
  * limitations under the License.
  */
 
-import java.lang.reflect.Field;
 import java.util.Random;
 
 /// Entry point to get [XXHash32] and [StreamingXXHash32] instances.
@@ -105,26 +104,13 @@ public final class XXHashFactory {
         return INSTANCE;
     }
 
-    @SuppressWarnings("unchecked")
-    private static <T> T classInstance(String cls) throws NoSuchFieldException, SecurityException, ClassNotFoundException, IllegalArgumentException, IllegalAccessException {
-        ClassLoader loader = XXHashFactory.class.getClassLoader();
-        loader = loader == null ? ClassLoader.getSystemClassLoader() : loader;
-        final Class<?> c = loader.loadClass(cls);
-        Field f = c.getField("INSTANCE");
-        return (T) f.get(null);
-    }
-
     private final String impl = "JavaSafe";
     private final XXHash32 hash32;
     private final XXHash64 hash64;
-    private final StreamingXXHash32.Factory streamingHash32Factory;
-    private final StreamingXXHash64.Factory streamingHash64Factory;
 
     private XXHashFactory() throws SecurityException, IllegalArgumentException {
         this.hash32 = new XXHash32JavaSafe();
-        this.streamingHash32Factory = new StreamingXXHash32JavaSafe.Factory();
         this.hash64 = new XXHash64JavaSafe();
-        this.streamingHash64Factory = new StreamingXXHash64JavaSafe.Factory();
 
         // make sure it can run
         final byte[] bytes = new byte[100];
@@ -167,7 +153,7 @@ public final class XXHashFactory {
     /// @param seed the seed to use
     /// @return a [StreamingXXHash32] instance
     public StreamingXXHash32 newStreamingHash32(int seed) {
-        return streamingHash32Factory.newStreamingHash(seed);
+        return new StreamingXXHash32JavaSafe(seed);
     }
 
     /// Return a new [StreamingXXHash64] instance.
@@ -175,7 +161,7 @@ public final class XXHashFactory {
     /// @param seed the seed to use
     /// @return a [StreamingXXHash64] instance
     public StreamingXXHash64 newStreamingHash64(long seed) {
-        return streamingHash64Factory.newStreamingHash(seed);
+        return new StreamingXXHash64JavaSafe(seed);
     }
 
     /// Prints the fastest instance.

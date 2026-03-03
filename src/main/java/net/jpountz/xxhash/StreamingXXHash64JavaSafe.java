@@ -12,17 +12,6 @@ import static java.lang.Long.rotateLeft;
  */
 final class StreamingXXHash64JavaSafe extends AbstractStreamingXXHash64Java {
 
-    static class Factory implements StreamingXXHash64.Factory {
-
-        public static final StreamingXXHash64.Factory INSTANCE = new Factory();
-
-        @Override
-        public StreamingXXHash64 newStreamingHash(long seed) {
-            return new StreamingXXHash64JavaSafe(seed);
-        }
-
-    }
-
     StreamingXXHash64JavaSafe(long seed) {
         super(seed);
     }

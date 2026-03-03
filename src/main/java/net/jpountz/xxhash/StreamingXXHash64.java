@@ -42,12 +42,6 @@ import java.io.Closeable;
  */
 public abstract class StreamingXXHash64 implements Closeable {
 
-    interface Factory {
-
-        StreamingXXHash64 newStreamingHash(long seed);
-
-    }
-
     final long seed;
 
     StreamingXXHash64(long seed) {
