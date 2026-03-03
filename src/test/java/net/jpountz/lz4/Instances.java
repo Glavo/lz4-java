@@ -21,8 +21,8 @@ enum Instances {
     ;
 
     static final LZ4Compressor[] COMPRESSORS = new LZ4Compressor[]{
-            LZ4Factory.nativeInstance().fastCompressor(),
-            LZ4Factory.nativeInstance().highCompressor(),
+            LZ4Factory.safeInstance().fastCompressor(),
+            LZ4Factory.safeInstance().highCompressor(),
     };
 
     static final LZ4FastDecompressor[] FAST_DECOMPRESSORS = new LZ4FastDecompressor[]{
