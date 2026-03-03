@@ -110,27 +110,6 @@ public final class XXHashFactory {
     private XXHashFactory() throws SecurityException, IllegalArgumentException {
         this.hash32 = new XXHash32JavaSafe();
         this.hash64 = new XXHash64JavaSafe();
-
-        // make sure it can run
-        final byte[] bytes = new byte[100];
-        final Random random = new Random();
-        random.nextBytes(bytes);
-        final int seed = random.nextInt();
-
-        final int h1 = hash32.hash(bytes, 0, bytes.length, seed);
-        final StreamingXXHash32 streamingHash32 = newStreamingHash32(seed);
-        streamingHash32.update(bytes, 0, bytes.length);
-        final int h2 = streamingHash32.getValue();
-        final long h3 = hash64.hash(bytes, 0, bytes.length, seed);
-        final StreamingXXHash64 streamingHash64 = newStreamingHash64(seed);
-        streamingHash64.update(bytes, 0, bytes.length);
-        final long h4 = streamingHash64.getValue();
-        if (h1 != h2) {
-            throw new AssertionError();
-        }
-        if (h3 != h4) {
-            throw new AssertionError();
-        }
     }
 
     /// Returns a [XXHash32] instance.

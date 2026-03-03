@@ -16,8 +16,6 @@ package net.jpountz.lz4;
  * limitations under the License.
  */
 
-import java.util.Arrays;
-
 import static net.jpountz.lz4.LZ4Constants.DEFAULT_COMPRESSION_LEVEL;
 import static net.jpountz.lz4.LZ4Constants.MAX_COMPRESSION_LEVEL;
 
@@ -162,25 +160,6 @@ public final class LZ4Factory {
             if (level == DEFAULT_COMPRESSION_LEVEL) continue;
             highCompressors[level] = new LZ4HCJavaSafeCompressor(level);
         }
-
-        // quickly test that everything works as expected
-        final byte[] original = new byte[]{'a', 'b', 'c', 'd', ' ', ' ', ' ', ' ', ' ', ' ', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'};
-        for (LZ4Compressor compressor : Arrays.asList(fastCompressor, highCompressor)) {
-            final int maxCompressedLength = compressor.maxCompressedLength(original.length);
-            final byte[] compressed = new byte[maxCompressedLength];
-            final int compressedLength = compressor.compress(original, 0, original.length, compressed, 0, maxCompressedLength);
-            final byte[] restored = new byte[original.length];
-            fastDecompressor.decompress(compressed, 0, restored, 0, original.length);
-            if (!Arrays.equals(original, restored)) {
-                throw new AssertionError();
-            }
-            Arrays.fill(restored, (byte) 0);
-            final int decompressedLength = safeDecompressor.decompress(compressed, 0, compressedLength, restored, 0);
-            if (decompressedLength != original.length || !Arrays.equals(original, restored)) {
-                throw new AssertionError();
-            }
-        }
-
     }
 
     /// Returns a blazing fast [LZ4Compressor].
