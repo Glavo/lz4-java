@@ -21,7 +21,7 @@ dependencies {
 }
 
 tasks.withType<JavaCompile> {
-    options.release.set(11)
+    options.release.set(17)
 }
 
 val testTempDir = layout.buildDirectory.dir("test-tmp")
