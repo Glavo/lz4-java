@@ -17,134 +17,134 @@ package net.jpountz.xxhash;
  */
 
 import java.nio.ByteBuffer;
+import java.util.List;
+import java.util.function.Function;
+import java.util.stream.LongStream;
 
-import net.jpountz.lz4.AbstractLZ4Test;
+import net.jpountz.RandomContext;
 import net.jpountz.util.SafeUtils;
 
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import static org.junit.Assert.*;
-
-import com.carrotsearch.randomizedtesting.annotations.Repeat;
 import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-public class XXHash32Test extends AbstractLZ4Test {
+public class XXHash32Test {
 
-    private static abstract class StreamingXXHash32Adapter extends XXHash32 {
-
-        protected abstract StreamingXXHash32 streamingHash(int seed);
-
-        @Override
-        public int hash(byte[] buf, int off, int len, int seed) {
-            SafeUtils.checkRange(buf, off, len);
-            int originalOff = off;
-            int remainingPasses = randomInt(5);
-            StreamingXXHash32 h = streamingHash(seed);
-            final int end = off + len;
-            while (off < end) {
-                final int l = randomIntBetween(off, end) - off;
-                h.update(buf, off, l);
-                off += l;
-                if (remainingPasses > 0 && randomInt(5) == 0) {
-                    h.reset();
-                    --remainingPasses;
-                    off = originalOff;
+    private static final List<Function<RandomContext, XXHash32>> PROVIDERS = List.of(
+            context -> XXHashFactory.safeInstance().hash32(),
+            context -> new XXHash32() {
+                @Override
+                public int hash(byte[] buf, int off, int len, int seed) {
+                    SafeUtils.checkRange(buf, off, len);
+                    int originalOff = off;
+                    int remainingPasses = context.nextInt(6);
+                    StreamingXXHash32 h = XXHashFactory.safeInstance().newStreamingHash32(seed);
+                    final int end = off + len;
+                    while (off < end) {
+                        final int l = context.nextInt(off, end + 1) - off;
+                        h.update(buf, off, l);
+                        off += l;
+                        if (remainingPasses > 0 && context.nextInt(6) == 0) {
+                            h.reset();
+                            --remainingPasses;
+                            off = originalOff;
+                        }
+                        if (context.nextBoolean()) {
+                            h.getValue();
+                        }
+                    }
+                    return h.getValue();
                 }
-                if (randomBoolean()) {
-                    h.getValue();
+
+                @Override
+                public int hash(ByteBuffer buf, int off, int len, int seed) {
+                    byte[] bytes = new byte[len];
+                    int originalPosition = buf.position();
+                    try {
+                        buf.position(off);
+                        buf.get(bytes, 0, len);
+                        return hash(bytes, 0, len, seed);
+                    } finally {
+                        buf.position(originalPosition);
+                    }
                 }
             }
-            return h.getValue();
-        }
+    );
 
-        @Override
-        public int hash(ByteBuffer buf, int off, int len, int seed) {
-            byte[] bytes = new byte[len];
-            int originalPosition = buf.position();
-            try {
-                buf.position(off);
-                buf.get(bytes, 0, len);
-                return hash(bytes, 0, len, seed);
-            } finally {
-                buf.position(originalPosition);
-            }
-        }
-
-        public String toString() {
-            return streamingHash(0).toString();
-        }
-
+    private static LongStream randomSeeds() {
+        return LongStream.range(0, 20);
     }
 
-    private static final XXHash32[] INSTANCES = new XXHash32[]{
-            XXHashFactory.safeInstance().hash32(),
-            new StreamingXXHash32Adapter() {
-                protected StreamingXXHash32 streamingHash(int seed) {
-                    return XXHashFactory.safeInstance().newStreamingHash32(seed);
-                }
-            }
-    };
+    @ParameterizedTest
+    @MethodSource("randomSeeds")
+    public void testEmpty(long randomSeed) {
+        var context = new RandomContext(randomSeed);
 
-    @Test
-    public void testEmpty() {
-        final int seed = randomInt();
-        for (XXHash32 xxHash : INSTANCES) {
+        final int seed = context.nextInt();
+        for (var provider : PROVIDERS) {
+            var xxHash = provider.apply(context);
             xxHash.hash(new byte[0], 0, 0, seed);
-            xxHash.hash(copyOf(new byte[0], 0, 0), 0, 0, seed);
+            xxHash.hash(context.copyOf(new byte[0], 0, 0), 0, 0, seed);
         }
     }
 
-    @Test
-    @Repeat(iterations = 20)
-    public void testAIOOBE() {
-        final int seed = randomInt();
-        final int max = randomBoolean() ? 32 : 1000;
-        final int bufLen = randomIntBetween(1, max);
-        final byte[] buf = randomArray(bufLen, 256);
-        final int off = randomInt(buf.length - 1);
-        final int len = randomInt(buf.length - off);
-        for (XXHash32 xxHash : INSTANCES) {
+    @ParameterizedTest
+    @MethodSource("randomSeeds")
+    public void testAIOOBE(long randomSeed) {
+        var context = new RandomContext(randomSeed);
+
+        final int seed = context.nextInt();
+        final int max = context.nextBoolean() ? 32 : 1000;
+        final int bufLen = context.nextInt(1, max + 1);
+        final byte[] buf = context.nextBytes(bufLen);
+        final int off = context.nextInt(buf.length);
+        final int len = context.nextInt(buf.length - off + 1);
+        for (var provider : PROVIDERS) {
+            var xxHash = provider.apply(context);
             xxHash.hash(buf, off, len, seed);
-            xxHash.hash(copyOf(buf, off, len), off, len, seed);
+            xxHash.hash(context.copyOf(buf, off, len), off, len, seed);
         }
     }
 
-    @Test
-    @Repeat(iterations = 40)
-    public void testInstances() {
-        final int maxLenLog = randomInt(20);
-        final int bufLen = randomInt(1 << maxLenLog);
-        byte[] buf = randomArray(bufLen, 256);
-        final int seed = randomInt();
-        final int off = randomIntBetween(0, Math.max(0, bufLen - 1));
-        final int len = randomIntBetween(0, bufLen - off);
+    @ParameterizedTest
+    @MethodSource("randomSeeds")
+    public void testInstances(long randomSeed) {
+        var context = new RandomContext(randomSeed);
+
+        final int maxLenLog = context.nextInt(21);
+        final int bufLen = context.nextInt(1 << maxLenLog);
+        byte[] buf = context.nextBytes(bufLen);
+        final int seed = context.nextInt();
+        final int off = context.nextInt(Math.max(1, bufLen));
+        final int len = context.nextInt(bufLen - off + 1);
 
         final int ref = XXHashFactory.nativeInstance().hash32().hash(buf, off, len, seed);
-        for (XXHash32 hash : INSTANCES) {
+        for (var provider : PROVIDERS) {
+            var hash = provider.apply(context);
             final int h = hash.hash(buf, off, len, seed);
-            assertEquals(hash.toString(), ref, h);
-            final ByteBuffer copy = copyOf(buf, off, len);
+            assertEquals(ref, h, hash.toString());
+            final ByteBuffer copy = context.copyOf(buf, off, len);
             final int h2 = hash.hash(copy, off, len, seed);
             assertEquals(off, copy.position());
             assertEquals(len, copy.remaining());
-            assertEquals(hash.toString(), ref, h2);
+            assertEquals(ref, h2, hash.toString());
         }
     }
 
-    @Test
-    public void test4GB() {
+    @ParameterizedTest
+    @MethodSource("randomSeeds")
+    public void test4GB(long randomSeed) {
         Assumptions.assumeTrue(XXHCLI.IS_AVAILABLE);
 
+        var context = new RandomContext(randomSeed);
 
-
-        byte[] bytes = new byte[randomIntBetween(1 << 22, 1 << 26)];
-        for (int i = 0; i < bytes.length; ++i) {
-            bytes[i] = randomByte();
-        }
-        final int off = randomInt(5);
-        final int len = randomIntBetween(bytes.length - off - 1024, bytes.length - off);
+        byte[] bytes = context.nextBytes(context.nextInt(1 << 22, 1 << 26));
+        final int off = context.nextInt(6);
+        final int len = context.nextInt(bytes.length - off - 1024, bytes.length - off);
         long totalLen = 0;
-        final int seed = randomInt();
+        final int seed = context.nextInt();
         StreamingXXHash32 hash1 = XXHashFactory.nativeInstance().newStreamingHash32(seed);
         StreamingXXHash32 hash2 = XXHashFactory.unsafeInstance().newStreamingHash32(seed);
         StreamingXXHash32 hash3 = XXHashFactory.safeInstance().newStreamingHash32(seed);
@@ -152,8 +152,8 @@ public class XXHash32Test extends AbstractLZ4Test {
             hash1.update(bytes, off, len);
             hash2.update(bytes, off, len);
             hash3.update(bytes, off, len);
-            assertEquals(hash2 + " " + totalLen, hash1.getValue(), hash2.getValue());
-            assertEquals(hash3 + " " + totalLen, hash1.getValue(), hash3.getValue());
+            assertEquals(hash1.getValue(), hash2.getValue(), hash2 + " " + totalLen);
+            assertEquals(hash1.getValue(), hash3.getValue(), hash3 + " " + totalLen);
             totalLen += len;
         }
     }
