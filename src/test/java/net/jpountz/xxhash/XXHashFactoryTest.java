@@ -16,15 +16,17 @@ package net.jpountz.xxhash;
  * limitations under the License.
  */
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
-public class XXHashFactoryTest extends TestCase {
+import static org.junit.jupiter.api.Assertions.*;
 
+public class XXHashFactoryTest {
+
+    @Test
     public void test() {
-        assertEquals(XXHash32JavaSafe.INSTANCE, XXHashFactory.safeInstance().hash32());
-        assertTrue(XXHashFactory.safeInstance().newStreamingHash32(0) instanceof StreamingXXHash32JavaSafe);
-        assertEquals(XXHash64JavaSafe.INSTANCE, XXHashFactory.safeInstance().hash64());
-        assertTrue(XXHashFactory.safeInstance().newStreamingHash64(0) instanceof StreamingXXHash64JavaSafe);
+        assertSame(XXHash32JavaSafe.INSTANCE, XXHashFactory.safeInstance().hash32());
+        assertInstanceOf(StreamingXXHash32JavaSafe.class, XXHashFactory.safeInstance().newStreamingHash32(0));
+        assertSame(XXHash64JavaSafe.INSTANCE, XXHashFactory.safeInstance().hash64());
+        assertInstanceOf(StreamingXXHash64JavaSafe.class, XXHashFactory.safeInstance().newStreamingHash64(0));
     }
-
 }

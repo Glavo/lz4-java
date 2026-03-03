@@ -17,7 +17,6 @@ final class LZ4JavaSafeFastDecompressor extends LZ4FastDecompressor {
 
     public static final LZ4FastDecompressor INSTANCE = new LZ4JavaSafeFastDecompressor();
 
-
     @Override
     public int decompress(byte[] src, final int srcOff, byte[] dest, final int destOff, int destLen) {
 

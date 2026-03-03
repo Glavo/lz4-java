@@ -17,7 +17,6 @@ final class LZ4JavaSafeSafeDecompressor extends LZ4SafeDecompressor {
 
     public static final LZ4SafeDecompressor INSTANCE = new LZ4JavaSafeSafeDecompressor();
 
-
     @Override
     public int decompress(byte[] src, final int srcOff, final int srcLen, byte[] dest, final int destOff, int destLen) {
         SafeUtils.checkRange(src, srcOff, srcLen);

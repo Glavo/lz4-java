@@ -151,10 +151,10 @@ public final class LZ4Factory {
     private final LZ4Compressor[] highCompressors = new LZ4Compressor[MAX_COMPRESSION_LEVEL + 1];
 
     private LZ4Factory() {
-        this.fastCompressor = new LZ4JavaSafeCompressor();
-        this.highCompressor = new LZ4HCJavaSafeCompressor();
+        this.fastCompressor = LZ4JavaSafeCompressor.INSTANCE;
+        this.highCompressor = LZ4HCJavaSafeCompressor.INSTANCE;
         this.fastDecompressor = LZ4JavaSafeFastDecompressor.INSTANCE;
-        this.safeDecompressor = new LZ4JavaSafeSafeDecompressor();
+        this.safeDecompressor = LZ4JavaSafeSafeDecompressor.INSTANCE;
         this.highCompressors[DEFAULT_COMPRESSION_LEVEL] = highCompressor;
         for (int level = 1; level <= MAX_COMPRESSION_LEVEL; level++) {
             if (level == DEFAULT_COMPRESSION_LEVEL) continue;

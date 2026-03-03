@@ -16,22 +16,18 @@ package net.jpountz.lz4;
  * limitations under the License.
  */
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
-public class LZ4FactoryTest extends TestCase {
+import static org.junit.jupiter.api.Assertions.assertSame;
 
+public class LZ4FactoryTest {
+
+    @Test
     public void test() {
-        assertEquals(LZ4JavaSafeCompressor.INSTANCE, LZ4Factory.unsafeInstance().fastCompressor());
-        assertEquals(LZ4HCJavaSafeCompressor.INSTANCE, LZ4Factory.unsafeInstance().highCompressor());
-        assertEquals(LZ4JavaSafeCompressor.INSTANCE, LZ4Factory.safeInstance().fastCompressor());
-        assertEquals(LZ4HCJavaSafeCompressor.INSTANCE, LZ4Factory.safeInstance().highCompressor());
-
-        assertEquals(LZ4JavaSafeFastDecompressor.INSTANCE, LZ4Factory.nativeInstance().fastDecompressor());
-        assertEquals(LZ4JavaSafeFastDecompressor.INSTANCE, LZ4Factory.unsafeInstance().fastDecompressor());
-        assertEquals(LZ4JavaSafeFastDecompressor.INSTANCE, LZ4Factory.safeInstance().fastDecompressor());
-
-        assertEquals(LZ4JavaSafeSafeDecompressor.INSTANCE, LZ4Factory.unsafeInstance().safeDecompressor());
-        assertEquals(LZ4JavaSafeSafeDecompressor.INSTANCE, LZ4Factory.safeInstance().safeDecompressor());
+        assertSame(LZ4JavaSafeCompressor.INSTANCE, LZ4Factory.safeInstance().fastCompressor());
+        assertSame(LZ4HCJavaSafeCompressor.INSTANCE, LZ4Factory.safeInstance().highCompressor());
+        assertSame(LZ4JavaSafeFastDecompressor.INSTANCE, LZ4Factory.safeInstance().fastDecompressor());
+        assertSame(LZ4JavaSafeSafeDecompressor.INSTANCE, LZ4Factory.safeInstance().safeDecompressor());
     }
 
 }

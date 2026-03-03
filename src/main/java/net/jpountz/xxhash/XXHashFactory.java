@@ -108,8 +108,8 @@ public final class XXHashFactory {
     private final XXHash64 hash64;
 
     private XXHashFactory() throws SecurityException, IllegalArgumentException {
-        this.hash32 = new XXHash32JavaSafe();
-        this.hash64 = new XXHash64JavaSafe();
+        this.hash32 = XXHash32JavaSafe.INSTANCE;
+        this.hash64 = XXHash64JavaSafe.INSTANCE;
     }
 
     /// Returns a [XXHash32] instance.

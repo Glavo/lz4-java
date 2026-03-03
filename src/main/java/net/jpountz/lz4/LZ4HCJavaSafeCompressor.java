@@ -31,7 +31,6 @@ final class LZ4HCJavaSafeCompressor extends LZ4Compressor {
         this.compressionLevel = compressionLevel;
     }
 
-
     private class HashTable {
         static final int MASK = MAX_DISTANCE - 1;
         int nextToUpdate;

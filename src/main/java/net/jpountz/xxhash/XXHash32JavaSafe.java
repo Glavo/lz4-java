@@ -17,7 +17,6 @@ final class XXHash32JavaSafe extends XXHash32 {
 
     public static final XXHash32 INSTANCE = new XXHash32JavaSafe();
 
-
     @Override
     public int hash(byte[] buf, int off, int len, int seed) {
         SafeUtils.checkRange(buf, off, len);
