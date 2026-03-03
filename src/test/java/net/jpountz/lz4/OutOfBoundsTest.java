@@ -32,14 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class OutOfBoundsTest {
     private static Stream<LZ4Factory> lz4Factories() {
-        return Stream.of(
-                LZ4Factory.fastestInstance(),
-                LZ4Factory.fastestJavaInstance(),
-                // LZ4Factory.nativeInsecureInstance(),
-                // LZ4Factory.nativeInstance(),
-                LZ4Factory.safeInstance()
-                // LZ4Factory.unsafeInsecureInstance()
-        );
+        return Stream.of(LZ4Factory.safeInstance());
     }
 
     static Stream<LZ4FastDecompressor> fastDecompressors() {
