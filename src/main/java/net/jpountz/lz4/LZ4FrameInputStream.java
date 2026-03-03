@@ -391,12 +391,12 @@ public class LZ4FrameInputStream extends FilterInputStream {
     }
 
     @Override
-    public synchronized void mark(int readlimit) {
+    public void mark(int readlimit) {
         throw new UnsupportedOperationException("mark not supported");
     }
 
     @Override
-    public synchronized void reset() throws IOException {
+    public void reset() throws IOException {
         throw new UnsupportedOperationException("reset not supported");
     }
 
