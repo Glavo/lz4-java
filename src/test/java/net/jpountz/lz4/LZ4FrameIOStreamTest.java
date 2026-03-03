@@ -20,7 +20,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.condition.EnabledIf;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -503,7 +502,6 @@ public class LZ4FrameIOStreamTest {
 
     @ParameterizedTest(name = "size={0}")
     @MethodSource("testSizes")
-    @EnabledIf("LZ4CLI.IS_AVAILABLE")
     public void testNativeDecompressIfAvailable(int testSize) throws IOException, InterruptedException {
         setUp(testSize);
         Assumptions.assumeTrue(LZ4CLI.IS_AVAILABLE);
