@@ -13,27 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.jpountz.lz4;
+package net.jpountz.xxhash;
 
 import java.io.IOException;
 
-public final class LZ4CLI {
+public final class XXHCLI {
 
     public static final boolean IS_AVAILABLE;
 
     static {
         boolean available = false;
         try {
-            ProcessBuilder checkBuilder = new ProcessBuilder().command("lz4", "-V").redirectErrorStream(true);
+            ProcessBuilder checkBuilder = new ProcessBuilder().command("xxhsum", "-V").redirectErrorStream(true);
             Process checkProcess = checkBuilder.start();
             available = checkProcess.waitFor() == 0;
         } catch (IOException | InterruptedException e) {
-            // lz4 CLI not available or failed to execute; treat as unavailable to allow test skip
+            // xxhsum CLI not available or failed to execute; treat as unavailable to allow test skip
         }
 
         IS_AVAILABLE = available;
     }
 
-    private LZ4CLI() {
+    private XXHCLI() {
     }
 }
