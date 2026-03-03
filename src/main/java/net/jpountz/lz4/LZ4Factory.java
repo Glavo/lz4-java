@@ -37,7 +37,7 @@ import static net.jpountz.lz4.LZ4Constants.MAX_COMPRESSION_LEVEL;
 /// a [LZ4Factory] instance in a static field.
 public final class LZ4Factory {
 
-    private static final LZ4Factory INSTANCE = new LZ4Factory("JavaSafe");
+    private static final LZ4Factory INSTANCE = new LZ4Factory();
 
     /// Returns a [LZ4Factory] instance that returns compressors and
     /// decompressors that are native bindings to the original C library.
@@ -146,15 +146,13 @@ public final class LZ4Factory {
         return INSTANCE;
     }
 
-    private final String impl;
     private final LZ4Compressor fastCompressor;
     private final LZ4Compressor highCompressor;
     private final LZ4FastDecompressor fastDecompressor;
     private final LZ4SafeDecompressor safeDecompressor;
     private final LZ4Compressor[] highCompressors = new LZ4Compressor[MAX_COMPRESSION_LEVEL + 1];
 
-    private LZ4Factory(String impl) {
-        this.impl = impl;
+    private LZ4Factory() {
         this.fastCompressor = new LZ4JavaSafeCompressor();
         this.highCompressor = new LZ4HCJavaSafeCompressor();
         this.fastDecompressor = LZ4JavaSafeFastDecompressor.INSTANCE;
@@ -270,7 +268,7 @@ public final class LZ4Factory {
 
     @Override
     public String toString() {
-        return getClass().getSimpleName() + ":" + impl;
+        return getClass().getSimpleName() + ":JavaSafe";
     }
 
 }

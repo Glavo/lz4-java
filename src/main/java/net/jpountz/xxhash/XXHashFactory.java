@@ -104,7 +104,6 @@ public final class XXHashFactory {
         return INSTANCE;
     }
 
-    private final String impl = "JavaSafe";
     private final XXHash32 hash32;
     private final XXHash64 hash64;
 
@@ -174,7 +173,7 @@ public final class XXHashFactory {
 
     @Override
     public String toString() {
-        return getClass().getSimpleName() + ":" + impl;
+        return getClass().getSimpleName() + ":JavaSafe";
     }
 
 }
