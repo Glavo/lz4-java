@@ -63,7 +63,7 @@ public final class LZ4Factory {
     ///     for this instance.
     ///     </ol>
     ///
-    ///     @return a [LZ4Factory] instance that returns compressors and
+    /// @return a [LZ4Factory] instance that returns compressors and
     ///     decompressors that are native bindings to the original C library
     public static LZ4Factory nativeInstance() {
         return INSTANCE;

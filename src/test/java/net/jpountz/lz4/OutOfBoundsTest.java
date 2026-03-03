@@ -31,179 +31,179 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class OutOfBoundsTest {
-  private static Stream<LZ4Factory> lz4Factories() {
-    return Stream.of(
-      LZ4Factory.fastestInstance(),
-      LZ4Factory.fastestJavaInstance(),
-      // LZ4Factory.nativeInsecureInstance(),
-      // LZ4Factory.nativeInstance(),
-      LZ4Factory.safeInstance()
-      // LZ4Factory.unsafeInsecureInstance()
-    );
-  }
-
-  static Stream<LZ4FastDecompressor> fastDecompressors() {
-    return lz4Factories().map(LZ4Factory::fastDecompressor);
-  }
-
-  private static Stream<LZ4SafeDecompressor> safeDecompressors() {
-    return lz4Factories().map(LZ4Factory::safeDecompressor);
-  }
-
-  /**
-   * Abstraction over {@link LZ4FastDecompressor} and {@link LZ4SafeDecompressor}.
-   *
-   * <p>Should only be used for decompression which is expected to fail, because for the non-failing case
-   * {@link LZ4FastDecompressor} and {@link LZ4SafeDecompressor} behave differently regarding whether the
-   * input or output should be fully consumed.
-   */
-  public interface FallibleDecompressor {
-    void decompress(byte[] input, byte[] output) throws LZ4Exception;
-
-    static FallibleDecompressor fromFast(LZ4FastDecompressor fastDecompressor) {
-      return new FallibleDecompressor() {
-        @Override
-        public void decompress(byte[] src, byte[] dest) throws LZ4Exception {
-          fastDecompressor.decompress(src, dest);
-        }
-
-        @Override
-        public String toString() {
-          return fastDecompressor.toString();
-        }
-      };
+    private static Stream<LZ4Factory> lz4Factories() {
+        return Stream.of(
+                LZ4Factory.fastestInstance(),
+                LZ4Factory.fastestJavaInstance(),
+                // LZ4Factory.nativeInsecureInstance(),
+                // LZ4Factory.nativeInstance(),
+                LZ4Factory.safeInstance()
+                // LZ4Factory.unsafeInsecureInstance()
+        );
     }
 
-    static FallibleDecompressor fromSafe(LZ4SafeDecompressor safeDecompressor) {
-      return new FallibleDecompressor() {
-        @Override
-        public void decompress(byte[] src, byte[] dest) throws LZ4Exception {
-          safeDecompressor.decompress(src, dest);
-        }
-
-        @Override
-        public String toString() {
-          return safeDecompressor.toString();
-        }
-      };
+    static Stream<LZ4FastDecompressor> fastDecompressors() {
+        return lz4Factories().map(LZ4Factory::fastDecompressor);
     }
-  }
 
-  static Stream<FallibleDecompressor> allDecompressors() {
-    return Stream.concat(fastDecompressors().map(FallibleDecompressor::fromFast),
-      safeDecompressors().map(FallibleDecompressor::fromSafe));
-  }
+    private static Stream<LZ4SafeDecompressor> safeDecompressors() {
+        return lz4Factories().map(LZ4Factory::safeDecompressor);
+    }
 
-  @ParameterizedTest
-  @MethodSource("allDecompressors")
-  public void incompleteInput(FallibleDecompressor decompressor) {
-    byte[] input = {
-      (byte) 0xf0,
-      -1, -1, -1, -1, -1, -1, -1, -1, 0
-    };
-    byte[] output = new byte[2055];
-    assertThrows(LZ4Exception.class, () -> decompressor.decompress(input, output));
-  }
+    /**
+     * Abstraction over {@link LZ4FastDecompressor} and {@link LZ4SafeDecompressor}.
+     *
+     * <p>Should only be used for decompression which is expected to fail, because for the non-failing case
+     * {@link LZ4FastDecompressor} and {@link LZ4SafeDecompressor} behave differently regarding whether the
+     * input or output should be fully consumed.
+     */
+    public interface FallibleDecompressor {
+        void decompress(byte[] input, byte[] output) throws LZ4Exception;
 
-  @ParameterizedTest
-  @MethodSource("fastDecompressors")
-  public void beyondBufferCapacity(LZ4FastDecompressor fastDecompressor) {
-    byte[] compressed = {
-      // one frame with 4x literal 0x77 and a copy of the same
-      (byte) 0x40,
-      0x77, 0x77, 0x77, 0x77,
-      0x04,
-      0x00,
-      // one frame with 8x literal 0x66
-      (byte) 0x80,
-      0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66,
-      0x00,
-      0x00
-    };
-    byte[] output = new byte[16];
+        static FallibleDecompressor fromFast(LZ4FastDecompressor fastDecompressor) {
+            return new FallibleDecompressor() {
+                @Override
+                public void decompress(byte[] src, byte[] dest) throws LZ4Exception {
+                    fastDecompressor.decompress(src, dest);
+                }
 
-    // normal decompression. so far so good.
-    fastDecompressor.decompress(ByteBuffer.wrap(compressed), ByteBuffer.wrap(output));
-    assertEquals(0x77, output[0]);
-    assertEquals(0x66, output[8]);
+                @Override
+                public String toString() {
+                    return fastDecompressor.toString();
+                }
+            };
+        }
 
-    // but if we only pass half the input size, we should get an error
-    assertThrows(LZ4Exception.class, () -> fastDecompressor.decompress(ByteBuffer.wrap(compressed, 0, 7).slice(), 0, ByteBuffer.wrap(output), 0, 16));
-  }
+        static FallibleDecompressor fromSafe(LZ4SafeDecompressor safeDecompressor) {
+            return new FallibleDecompressor() {
+                @Override
+                public void decompress(byte[] src, byte[] dest) throws LZ4Exception {
+                    safeDecompressor.decompress(src, dest);
+                }
 
-  // Note: For JNI decompressor this might not actually overflow because it uses larger variable types,
-  // but instead fails because the input is incomplete
-  @ParameterizedTest
-  @MethodSource("allDecompressors")
-  public void literalLenOverflow(FallibleDecompressor decompressor) {
-    ByteArrayOutputStream inputWriter = new ByteArrayOutputStream();
-    // Token
-    inputWriter.write((byte) 0b1111_0000);
-    // Causes overflow for `literalLen`
-    byte[] literalLenBytes = new byte[Integer.MAX_VALUE / 255 + 1]; // ~9MB
-    Arrays.fill(literalLenBytes, (byte) 255);
-    inputWriter.writeBytes(literalLenBytes);
-    inputWriter.write(1);
+                @Override
+                public String toString() {
+                    return safeDecompressor.toString();
+                }
+            };
+        }
+    }
 
-    inputWriter.writeBytes(new byte[20]);
+    static Stream<FallibleDecompressor> allDecompressors() {
+        return Stream.concat(fastDecompressors().map(FallibleDecompressor::fromFast),
+                safeDecompressors().map(FallibleDecompressor::fromSafe));
+    }
 
-    byte[] input = inputWriter.toByteArray();
-    byte[] output = new byte[2055];
-    assertThrows(LZ4Exception.class, () -> decompressor.decompress(input, output));
-  }
+    @ParameterizedTest
+    @MethodSource("allDecompressors")
+    public void incompleteInput(FallibleDecompressor decompressor) {
+        byte[] input = {
+                (byte) 0xf0,
+                -1, -1, -1, -1, -1, -1, -1, -1, 0
+        };
+        byte[] output = new byte[2055];
+        assertThrows(LZ4Exception.class, () -> decompressor.decompress(input, output));
+    }
 
-  // Note: For JNI decompressor this might not actually overflow because it uses larger variable types,
-  // but instead fails because the input is incomplete
-  @ParameterizedTest
-  @MethodSource("allDecompressors")
-  public void matchLenOverflow(FallibleDecompressor decompressor) {
-    ByteArrayOutputStream inputWriter = new ByteArrayOutputStream();
-    // Token
-    inputWriter.write((byte) 0b0000_1111);
-    // matchDec
-    inputWriter.writeBytes(new byte[2]);
+    @ParameterizedTest
+    @MethodSource("fastDecompressors")
+    public void beyondBufferCapacity(LZ4FastDecompressor fastDecompressor) {
+        byte[] compressed = {
+                // one frame with 4x literal 0x77 and a copy of the same
+                (byte) 0x40,
+                0x77, 0x77, 0x77, 0x77,
+                0x04,
+                0x00,
+                // one frame with 8x literal 0x66
+                (byte) 0x80,
+                0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66,
+                0x00,
+                0x00
+        };
+        byte[] output = new byte[16];
 
-    // Causes overflow for `matchLen`
-    byte[] matchLenBytes = new byte[Integer.MAX_VALUE / 255 + 1]; // ~9MB
-    Arrays.fill(matchLenBytes, (byte) 255);
-    inputWriter.writeBytes(matchLenBytes);
-    inputWriter.write(1);
+        // normal decompression. so far so good.
+        fastDecompressor.decompress(ByteBuffer.wrap(compressed), ByteBuffer.wrap(output));
+        assertEquals(0x77, output[0]);
+        assertEquals(0x66, output[8]);
 
-    // `matchLen` overflow only causes out-of-bounds access during next iteration
+        // but if we only pass half the input size, we should get an error
+        assertThrows(LZ4Exception.class, () -> fastDecompressor.decompress(ByteBuffer.wrap(compressed, 0, 7).slice(), 0, ByteBuffer.wrap(output), 0, 16));
+    }
 
-    // Token
-    inputWriter.write(255);
-    // Arbitrary literal data
-    inputWriter.writeBytes(new byte[1000]);
+    // Note: For JNI decompressor this might not actually overflow because it uses larger variable types,
+    // but instead fails because the input is incomplete
+    @ParameterizedTest
+    @MethodSource("allDecompressors")
+    public void literalLenOverflow(FallibleDecompressor decompressor) {
+        ByteArrayOutputStream inputWriter = new ByteArrayOutputStream();
+        // Token
+        inputWriter.write((byte) 0b1111_0000);
+        // Causes overflow for `literalLen`
+        byte[] literalLenBytes = new byte[Integer.MAX_VALUE / 255 + 1]; // ~9MB
+        Arrays.fill(literalLenBytes, (byte) 255);
+        inputWriter.writeBytes(literalLenBytes);
+        inputWriter.write(1);
 
-    byte[] input = inputWriter.toByteArray();
-    byte[] output = new byte[2055];
-    assertThrows(LZ4Exception.class, () -> decompressor.decompress(input, output));
-  }
+        inputWriter.writeBytes(new byte[20]);
 
-  static Stream<Object[]> copyBeyondOutputInputs() {
-    return allDecompressors()
-      .flatMap(decompressor ->
-        IntStream.range(0, 14).boxed().flatMap(dec ->
-          IntStream.range(dec, 14).mapToObj(len -> new Object[]{decompressor, dec.byteValue(), len})));
-  }
+        byte[] input = inputWriter.toByteArray();
+        byte[] output = new byte[2055];
+        assertThrows(LZ4Exception.class, () -> decompressor.decompress(input, output));
+    }
 
-  @ParameterizedTest
-  @MethodSource("copyBeyondOutputInputs")
-  public void copyBeyondOutput(FallibleDecompressor decompressor, byte dec, int len) {
-    byte[] compressed = {
-      // padding frame (14 bytes)
-      (byte) 0xe0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      // copy len bytes (+ 4 MIN_MATCH) from -dec
-      (byte) len, dec, 0,
-      // padding frame (12 bytes)
-      (byte) 0xc0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-    };
-    byte[] output = new byte[14 + MIN_MATCH + len + MIN_MATCH + 12];
-    Arrays.fill(output, (byte) 0x77);
+    // Note: For JNI decompressor this might not actually overflow because it uses larger variable types,
+    // but instead fails because the input is incomplete
+    @ParameterizedTest
+    @MethodSource("allDecompressors")
+    public void matchLenOverflow(FallibleDecompressor decompressor) {
+        ByteArrayOutputStream inputWriter = new ByteArrayOutputStream();
+        // Token
+        inputWriter.write((byte) 0b0000_1111);
+        // matchDec
+        inputWriter.writeBytes(new byte[2]);
 
-    decompressor.decompress(compressed, output);
+        // Causes overflow for `matchLen`
+        byte[] matchLenBytes = new byte[Integer.MAX_VALUE / 255 + 1]; // ~9MB
+        Arrays.fill(matchLenBytes, (byte) 255);
+        inputWriter.writeBytes(matchLenBytes);
+        inputWriter.write(1);
 
-    assertArrayEquals(new byte[output.length], output); // should be all zero
-  }
+        // `matchLen` overflow only causes out-of-bounds access during next iteration
+
+        // Token
+        inputWriter.write(255);
+        // Arbitrary literal data
+        inputWriter.writeBytes(new byte[1000]);
+
+        byte[] input = inputWriter.toByteArray();
+        byte[] output = new byte[2055];
+        assertThrows(LZ4Exception.class, () -> decompressor.decompress(input, output));
+    }
+
+    static Stream<Object[]> copyBeyondOutputInputs() {
+        return allDecompressors()
+                .flatMap(decompressor ->
+                        IntStream.range(0, 14).boxed().flatMap(dec ->
+                                IntStream.range(dec, 14).mapToObj(len -> new Object[]{decompressor, dec.byteValue(), len})));
+    }
+
+    @ParameterizedTest
+    @MethodSource("copyBeyondOutputInputs")
+    public void copyBeyondOutput(FallibleDecompressor decompressor, byte dec, int len) {
+        byte[] compressed = {
+                // padding frame (14 bytes)
+                (byte) 0xe0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                // copy len bytes (+ 4 MIN_MATCH) from -dec
+                (byte) len, dec, 0,
+                // padding frame (12 bytes)
+                (byte) 0xc0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        };
+        byte[] output = new byte[14 + MIN_MATCH + len + MIN_MATCH + 12];
+        Arrays.fill(output, (byte) 0x77);
+
+        decompressor.decompress(compressed, output);
+
+        assertArrayEquals(new byte[output.length], output); // should be all zero
+    }
 }
