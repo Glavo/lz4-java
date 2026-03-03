@@ -20,6 +20,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.condition.EnabledIf;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -123,24 +124,10 @@ public class LZ4FrameIOStreamTest {
         }
     }
 
-    /**
-     * Whether the native LZ4 CLI is available; can be used for comparing this library with the expected native LZ4 behavior
-     */
-    private static boolean hasLz4CLI = false;
-
     @BeforeAll
     public static void checkLz4CLI() {
-        try {
-            ProcessBuilder checkBuilder = new ProcessBuilder().command("lz4", "-V").redirectErrorStream(true);
-            Process checkProcess = checkBuilder.start();
-            hasLz4CLI = checkProcess.waitFor() == 0;
-        } catch (IOException | InterruptedException e) {
-            // lz4 CLI not available or failed to execute; treat as unavailable to allow test skip
-            hasLz4CLI = false;
-        }
-
         // Check if this is running in CI (env CI=true), see https://docs.github.com/en/actions/reference/workflows-and-actions/variables#default-environment-variables
-        if (!hasLz4CLI && "true".equals(System.getenv("CI"))) {
+        if (!LZ4CLI.IS_AVAILABLE && "true".equals(System.getenv("CI"))) {
             fail("LZ4 CLI is not available, but should be for CI run");
         }
     }
@@ -460,7 +447,7 @@ public class LZ4FrameIOStreamTest {
     @MethodSource("testSizes")
     public void testNativeCompressIfAvailable(int testSize) throws IOException, InterruptedException {
         setUp(testSize);
-        Assumptions.assumeTrue(hasLz4CLI);
+        Assumptions.assumeTrue(LZ4CLI.IS_AVAILABLE);
         nativeCompress();
         nativeCompress("--no-frame-crc");
     }
@@ -516,9 +503,10 @@ public class LZ4FrameIOStreamTest {
 
     @ParameterizedTest(name = "size={0}")
     @MethodSource("testSizes")
+    @EnabledIf("LZ4CLI.IS_AVAILABLE")
     public void testNativeDecompressIfAvailable(int testSize) throws IOException, InterruptedException {
         setUp(testSize);
-        Assumptions.assumeTrue(hasLz4CLI);
+        Assumptions.assumeTrue(LZ4CLI.IS_AVAILABLE);
         final Path lz4File = createTempFile("lz4test", ".lz4");
         final Path unCompressedFile = createTempFile("lz4raw", ".dat");
         Files.deleteIfExists(unCompressedFile);
