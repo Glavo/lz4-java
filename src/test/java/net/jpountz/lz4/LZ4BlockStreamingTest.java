@@ -23,7 +23,7 @@ import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.function.Consumer;
 import java.util.zip.Adler32;
@@ -301,7 +301,7 @@ public class LZ4BlockStreamingTest extends AbstractLZ4Test {
 
     @Test
     public void testDoubleClose() throws IOException {
-        final byte[] testBytes = "Testing!".getBytes(Charset.forName("UTF-8"));
+        final byte[] testBytes = "Testing!".getBytes(StandardCharsets.UTF_8);
 
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         LZ4BlockOutputStream out = new LZ4BlockOutputStream(bytes);

@@ -46,7 +46,7 @@ public class XXHashExample {
     private static void streamingExample() throws IOException {
         XXHashFactory factory = XXHashFactory.fastestInstance();
 
-        byte[] data = "12345345234572".getBytes("UTF-8");
+        byte[] data = "12345345234572".getBytes(StandardCharsets.UTF_8);
         ByteArrayInputStream in = new ByteArrayInputStream(data);
 
         int seed = 0x9747b28c; // used to initialize the hash value, use whatever
