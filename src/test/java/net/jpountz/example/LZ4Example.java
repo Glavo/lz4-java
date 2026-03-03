@@ -16,7 +16,6 @@ package net.jpountz.example;
  * limitations under the License.
  */
 
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 
 import net.jpountz.lz4.LZ4Compressor;
@@ -30,7 +29,7 @@ public class LZ4Example {
         example();
     }
 
-    private static void example() throws UnsupportedEncodingException {
+    private static void example() {
         LZ4Factory factory = LZ4Factory.fastestInstance();
 
         byte[] data = "12345345234572".getBytes(StandardCharsets.UTF_8);

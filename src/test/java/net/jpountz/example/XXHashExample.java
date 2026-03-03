@@ -18,7 +18,6 @@ package net.jpountz.example;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 
 import net.jpountz.xxhash.StreamingXXHash32;
@@ -32,7 +31,7 @@ public class XXHashExample {
         streamingExample();
     }
 
-    private static void blockExample() throws UnsupportedEncodingException {
+    private static void blockExample() {
         XXHashFactory factory = XXHashFactory.fastestInstance();
 
         byte[] data = "12345345234572".getBytes(StandardCharsets.UTF_8);
