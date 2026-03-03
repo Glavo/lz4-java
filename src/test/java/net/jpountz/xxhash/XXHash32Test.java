@@ -75,20 +75,8 @@ public class XXHash32Test extends AbstractLZ4Test {
 
     }
 
-    private static XXHash32[] INSTANCES = new XXHash32[]{
-            XXHashFactory.nativeInstance().hash32(),
-            XXHashFactory.unsafeInstance().hash32(),
+    private static final XXHash32[] INSTANCES = new XXHash32[]{
             XXHashFactory.safeInstance().hash32(),
-            new StreamingXXHash32Adapter() {
-                protected StreamingXXHash32 streamingHash(int seed) {
-                    return XXHashFactory.nativeInstance().newStreamingHash32(seed);
-                }
-            },
-            new StreamingXXHash32Adapter() {
-                protected StreamingXXHash32 streamingHash(int seed) {
-                    return XXHashFactory.unsafeInstance().newStreamingHash32(seed);
-                }
-            },
             new StreamingXXHash32Adapter() {
                 protected StreamingXXHash32 streamingHash(int seed) {
                     return XXHashFactory.safeInstance().newStreamingHash32(seed);
@@ -159,8 +147,8 @@ public class XXHash32Test extends AbstractLZ4Test {
             hash1.update(bytes, off, len);
             hash2.update(bytes, off, len);
             hash3.update(bytes, off, len);
-            assertEquals(hash2.toString() + " " + totalLen, hash1.getValue(), hash2.getValue());
-            assertEquals(hash3.toString() + " " + totalLen, hash1.getValue(), hash3.getValue());
+            assertEquals(hash2 + " " + totalLen, hash1.getValue(), hash2.getValue());
+            assertEquals(hash3 + " " + totalLen, hash1.getValue(), hash3.getValue());
             totalLen += len;
         }
     }

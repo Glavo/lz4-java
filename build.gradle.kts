@@ -14,6 +14,7 @@ dependencies {
     testImplementation(platform("org.junit:junit-bom:5.10.0"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    testRuntimeOnly("org.junit.vintage:junit-vintage-engine")
 
     testImplementation("com.carrotsearch.randomizedtesting:randomizedtesting-runner:2.7.7")
     testImplementation("com.code-intelligence:jazzer-junit:0.26.0")
