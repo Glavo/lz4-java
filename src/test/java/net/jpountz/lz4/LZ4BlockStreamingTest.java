@@ -66,7 +66,7 @@ public abstract class LZ4BlockStreamingTest extends AbstractLZ4Test {
     }
 
     // An input stream that might read less data than it is able to
-    class MockInputStream extends FilterInputStream {
+    static final class MockInputStream extends FilterInputStream {
 
         private final RandomContext context;
 
@@ -88,7 +88,7 @@ public abstract class LZ4BlockStreamingTest extends AbstractLZ4Test {
     }
 
     // an output stream that delays the actual writes
-    class MockOutputStream extends FilterOutputStream {
+    static final class MockOutputStream extends FilterOutputStream {
 
         private final RandomContext context;
         private final byte[] buffer;
