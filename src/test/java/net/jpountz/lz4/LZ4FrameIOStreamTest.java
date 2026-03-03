@@ -26,9 +26,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.EOFException;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.SequenceInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -37,6 +34,8 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
@@ -44,9 +43,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.stream.Stream;
 
-/**
- *
- */
 public class LZ4FrameIOStreamTest {
     private static void copy(InputStream in, OutputStream out) throws IOException {
         final byte[] buffer = new byte[1 << 10];
@@ -84,13 +80,13 @@ public class LZ4FrameIOStreamTest {
         return retval.stream();
     }
 
-    File tmpFile = null;
+    Path tmpFile = null;
 
     private void setUp(int testSize) throws IOException {
-        tmpFile = Files.createTempFile("lz4ioTest", ".dat").toFile();
+        tmpFile = Files.createTempFile("lz4ioTest", ".dat");
         final Random rnd = new Random(5378L);
         int sizeRemaining = testSize;
-        try (OutputStream os = Files.newOutputStream(tmpFile.toPath())) {
+        try (OutputStream os = Files.newOutputStream(tmpFile)) {
             while (sizeRemaining > 0) {
                 final byte[] buff = new byte[Math.min(sizeRemaining, 1 << 10)];
                 rnd.nextBytes(buff);
@@ -98,13 +94,13 @@ public class LZ4FrameIOStreamTest {
                 sizeRemaining -= buff.length;
             }
         }
-        Assertions.assertEquals(testSize, tmpFile.length());
+        Assertions.assertEquals(testSize, Files.size(tmpFile));
     }
 
     @AfterEach
-    public void tearDown() {
-        if (tmpFile != null && tmpFile.exists() && !tmpFile.delete()) {
-            Assertions.fail(String.format("Could not delete file [%s]", tmpFile.getAbsolutePath()));
+    public void tearDown() throws IOException {
+        if (tmpFile != null && Files.exists(tmpFile)) {
+            Files.deleteIfExists(tmpFile);
         }
     }
 
@@ -141,9 +137,9 @@ public class LZ4FrameIOStreamTest {
         }
     }
 
-    private void validateStreamEquals(InputStream is, File file) throws IOException {
-        int size = (int) file.length();
-        try (InputStream fis = new FileInputStream(file)) {
+    private void validateStreamEquals(InputStream is, Path file) throws IOException {
+        int size = (int) Files.size(file);
+        try (InputStream fis = Files.newInputStream(file)) {
             while (size > 0) {
                 final byte[] buffer0 = new byte[Math.min(size, 1 << 10)];
                 final byte[] buffer1 = new byte[Math.min(size, 1 << 10)];
@@ -157,9 +153,9 @@ public class LZ4FrameIOStreamTest {
         }
     }
 
-    private void validateStreamEqualsWithPerByteRead(InputStream is, File file) throws IOException {
-        try (InputStream fis = new FileInputStream(file)) {
-            for (int size = (int) file.length(); size > 0; size--) {
+    private void validateStreamEqualsWithPerByteRead(InputStream is, Path file) throws IOException {
+        try (InputStream fis = Files.newInputStream(file)) {
+            for (int size = (int) Files.size(file); size > 0; size--) {
                 int byte0 = is.read();
                 int byte1 = fis.read();
                 Assertions.assertEquals(byte0, byte1);
@@ -177,21 +173,21 @@ public class LZ4FrameIOStreamTest {
     @MethodSource("testSizes")
     public void testValidator(int testSize) throws IOException {
         setUp(testSize);
-        try (InputStream is = new FileInputStream(tmpFile)) {
+        try (InputStream is = Files.newInputStream(tmpFile)) {
             validateStreamEquals(is, tmpFile);
         }
-        final File file = Files.createTempFile("copyTmp", ".dat").toFile();
+        final Path file = Files.createTempFile("copyTmp", ".dat");
         try {
-            try (InputStream is = new FileInputStream(tmpFile)) {
-                try (OutputStream os = new FileOutputStream(file)) {
+            try (InputStream is = Files.newInputStream(tmpFile)) {
+                try (OutputStream os = Files.newOutputStream(file)) {
                     copy(is, os);
                 }
             }
-            try (InputStream is = new FileInputStream(file)) {
+            try (InputStream is = Files.newInputStream(file)) {
                 validateStreamEquals(is, file);
             }
         } finally {
-            file.delete();
+            Files.deleteIfExists(file);
         }
     }
 
@@ -199,15 +195,15 @@ public class LZ4FrameIOStreamTest {
     @MethodSource("testSizes")
     public void testOutputSimple(int testSize) throws IOException {
         setUp(testSize);
-        final File lz4File = Files.createTempFile("lz4test", ".lz4").toFile();
+        final Path lz4File = Files.createTempFile("lz4test", ".lz4");
         try {
-            try (OutputStream os = new LZ4FrameOutputStream(new FileOutputStream(lz4File))) {
-                try (InputStream is = new FileInputStream(tmpFile)) {
+            try (OutputStream os = new LZ4FrameOutputStream(Files.newOutputStream(lz4File))) {
+                try (InputStream is = Files.newInputStream(tmpFile)) {
                     copy(is, os);
                 }
             }
             final ByteBuffer buffer = ByteBuffer.allocate(1024).order(ByteOrder.LITTLE_ENDIAN);
-            try (FileChannel channel = FileChannel.open(lz4File.toPath())) {
+            try (FileChannel channel = FileChannel.open(lz4File)) {
                 channel.read(buffer);
             }
             buffer.rewind();
@@ -222,7 +218,7 @@ public class LZ4FrameIOStreamTest {
             LZ4FrameOutputStream.BD bd = LZ4FrameOutputStream.BD.fromByte(buffer.get());
             Assertions.assertEquals(LZ4FrameOutputStream.BLOCKSIZE.SIZE_4MB.getIndicator() << 4, bd.toByte());
         } finally {
-            lz4File.delete();
+            Files.deleteIfExists(lz4File);
         }
     }
 
@@ -230,18 +226,18 @@ public class LZ4FrameIOStreamTest {
     @MethodSource("testSizes")
     public void testInputOutputSimple(int testSize) throws IOException {
         setUp(testSize);
-        final File lz4File = Files.createTempFile("lz4test", ".lz4").toFile();
+        final Path lz4File = Files.createTempFile("lz4test", ".lz4");
         try {
-            try (OutputStream os = new LZ4FrameOutputStream(new FileOutputStream(lz4File))) {
-                try (InputStream is = new FileInputStream(tmpFile)) {
+            try (OutputStream os = new LZ4FrameOutputStream(Files.newOutputStream(lz4File))) {
+                try (InputStream is = Files.newInputStream(tmpFile)) {
                     copy(is, os);
                 }
             }
-            try (InputStream is = new LZ4FrameInputStream(new FileInputStream(lz4File))) {
+            try (InputStream is = new LZ4FrameInputStream(Files.newInputStream(lz4File))) {
                 validateStreamEquals(is, tmpFile);
             }
         } finally {
-            lz4File.delete();
+            Files.deleteIfExists(lz4File);
         }
     }
 
@@ -249,18 +245,18 @@ public class LZ4FrameIOStreamTest {
     @MethodSource("testSizes")
     public void testInputOutputWithPerByteReadWrite(int testSize) throws IOException {
         setUp(testSize);
-        final File lz4File = Files.createTempFile("lz4test", ".lz4").toFile();
+        final Path lz4File = Files.createTempFile("lz4test", ".lz4");
         try {
-            try (OutputStream os = new LZ4FrameOutputStream(new FileOutputStream(lz4File))) {
-                try (InputStream is = new FileInputStream(tmpFile)) {
+            try (OutputStream os = new LZ4FrameOutputStream(Files.newOutputStream(lz4File))) {
+                try (InputStream is = Files.newInputStream(tmpFile)) {
                     copyWithPerByteReadWrite(is, os);
                 }
             }
-            try (InputStream is = new LZ4FrameInputStream(new FileInputStream(lz4File))) {
+            try (InputStream is = new LZ4FrameInputStream(Files.newInputStream(lz4File))) {
                 validateStreamEqualsWithPerByteRead(is, tmpFile);
             }
         } finally {
-            lz4File.delete();
+            Files.deleteIfExists(lz4File);
         }
     }
 
@@ -268,9 +264,9 @@ public class LZ4FrameIOStreamTest {
     @MethodSource("testSizes")
     public void testInputOutputSkipped(int testSize) throws IOException {
         setUp(testSize);
-        final File lz4File = Files.createTempFile("lz4test", ".lz4").toFile();
+        final Path lz4File = Files.createTempFile("lz4test", ".lz4");
         try {
-            try (FileOutputStream fos = new FileOutputStream(lz4File)) {
+            try (OutputStream fos = Files.newOutputStream(lz4File)) {
                 final int skipSize = 1 << 10;
                 final ByteBuffer skipBuffer = ByteBuffer.allocate(skipSize + 8).order(ByteOrder.LITTLE_ENDIAN);
                 skipBuffer.putInt(LZ4FrameInputStream.MAGIC_SKIPPABLE_BASE | 0x00000007); // anything 00 through FF should work
@@ -280,16 +276,16 @@ public class LZ4FrameIOStreamTest {
                 skipBuffer.put(skipRandom);
                 fos.write(skipBuffer.array());
                 try (OutputStream os = new LZ4FrameOutputStream(fos)) {
-                    try (InputStream is = new FileInputStream(tmpFile)) {
+                    try (InputStream is = Files.newInputStream(tmpFile)) {
                         copy(is, os);
                     }
                 }
             }
-            try (InputStream is = new LZ4FrameInputStream(new FileInputStream(lz4File))) {
+            try (InputStream is = new LZ4FrameInputStream(Files.newInputStream(lz4File))) {
                 validateStreamEquals(is, tmpFile);
             }
         } finally {
-            lz4File.delete();
+            Files.deleteIfExists(lz4File);
         }
     }
 
@@ -297,9 +293,9 @@ public class LZ4FrameIOStreamTest {
     @MethodSource("testSizes")
     public void testSkippableOnly(int testSize) throws IOException {
         setUp(testSize);
-        final File lz4File = Files.createTempFile("lz4test", ".lz4").toFile();
+        final Path lz4File = Files.createTempFile("lz4test", ".lz4");
         try {
-            try (FileOutputStream fos = new FileOutputStream(lz4File)) {
+            try (OutputStream fos = Files.newOutputStream(lz4File)) {
                 final int skipSize = 1 << 10;
                 final ByteBuffer skipBuffer = ByteBuffer.allocate(skipSize + 8).order(ByteOrder.LITTLE_ENDIAN);
                 skipBuffer.putInt(LZ4FrameInputStream.MAGIC_SKIPPABLE_BASE | 0x00000007); // anything 00 through FF should work
@@ -309,15 +305,15 @@ public class LZ4FrameIOStreamTest {
                 skipBuffer.put(skipRandom);
                 fos.write(skipBuffer.array());
             }
-            try (InputStream is = new LZ4FrameInputStream(new FileInputStream(lz4File))) {
+            try (InputStream is = new LZ4FrameInputStream(Files.newInputStream(lz4File))) {
                 Assertions.assertEquals(-1, is.read());
             }
             // Extra one byte at the tail
-            try (InputStream is = new LZ4FrameInputStream(new SequenceInputStream(new FileInputStream(lz4File), new ByteArrayInputStream(new byte[1])))) {
+            try (InputStream is = new LZ4FrameInputStream(new SequenceInputStream(Files.newInputStream(lz4File), new ByteArrayInputStream(new byte[1])))) {
                 Assertions.assertThrows(IOException.class, is::read);
             }
         } finally {
-            lz4File.delete();
+            Files.deleteIfExists(lz4File);
         }
     }
 
@@ -325,26 +321,26 @@ public class LZ4FrameIOStreamTest {
     @MethodSource("testSizes")
     public void testStreamWithContentSize(int testSize) throws IOException {
         setUp(testSize);
-        final File lz4File = Files.createTempFile("lz4test", ".lz4").toFile();
+        final Path lz4File = Files.createTempFile("lz4test", ".lz4");
         try {
-            final long knownSize = tmpFile.length();
-            try (OutputStream os = new LZ4FrameOutputStream(new FileOutputStream(lz4File),
+            final long knownSize = Files.size(tmpFile);
+            try (OutputStream os = new LZ4FrameOutputStream(Files.newOutputStream(lz4File),
                     LZ4FrameOutputStream.BLOCKSIZE.SIZE_4MB,
                     knownSize,
                     LZ4FrameOutputStream.FLG.Bits.BLOCK_INDEPENDENCE,
                     LZ4FrameOutputStream.FLG.Bits.CONTENT_CHECKSUM,
                     LZ4FrameOutputStream.FLG.Bits.CONTENT_SIZE)) {
-                try (InputStream is = new FileInputStream(tmpFile)) {
+                try (InputStream is = Files.newInputStream(tmpFile)) {
                     copy(is, os);
                 }
             }
-            try (LZ4FrameInputStream is = new LZ4FrameInputStream(new FileInputStream(lz4File), true)) {
+            try (LZ4FrameInputStream is = new LZ4FrameInputStream(Files.newInputStream(lz4File), true)) {
                 Assertions.assertEquals(knownSize, is.getExpectedContentSize());
                 Assertions.assertTrue(is.isExpectedContentSizeDefined());
                 validateStreamEquals(is, tmpFile);
             }
         } finally {
-            lz4File.delete();
+            Files.deleteIfExists(lz4File);
         }
     }
 
@@ -352,23 +348,23 @@ public class LZ4FrameIOStreamTest {
     @MethodSource("testSizes")
     public void testStreamWithoutContentSize(int testSize) throws IOException {
         setUp(testSize);
-        final File lz4File = Files.createTempFile("lz4test", ".lz4").toFile();
+        final Path lz4File = Files.createTempFile("lz4test", ".lz4");
         try {
-            try (OutputStream os = new LZ4FrameOutputStream(new FileOutputStream(lz4File),
+            try (OutputStream os = new LZ4FrameOutputStream(Files.newOutputStream(lz4File),
                     LZ4FrameOutputStream.BLOCKSIZE.SIZE_4MB,
                     LZ4FrameOutputStream.FLG.Bits.BLOCK_INDEPENDENCE,
                     LZ4FrameOutputStream.FLG.Bits.CONTENT_CHECKSUM)) {
-                try (InputStream is = new FileInputStream(tmpFile)) {
+                try (InputStream is = Files.newInputStream(tmpFile)) {
                     copy(is, os);
                 }
             }
-            try (LZ4FrameInputStream is = new LZ4FrameInputStream(new FileInputStream(lz4File), true)) {
+            try (LZ4FrameInputStream is = new LZ4FrameInputStream(Files.newInputStream(lz4File), true)) {
                 Assertions.assertEquals(-1L, is.getExpectedContentSize());
                 Assertions.assertFalse(is.isExpectedContentSizeDefined());
                 validateStreamEquals(is, tmpFile);
             }
         } finally {
-            lz4File.delete();
+            Files.deleteIfExists(lz4File);
         }
     }
 
@@ -376,21 +372,21 @@ public class LZ4FrameIOStreamTest {
     @MethodSource("testSizes")
     public void testInputOutputWithBlockChecksum(int testSize) throws IOException {
         setUp(testSize);
-        final File lz4File = Files.createTempFile("lz4test", ".lz4").toFile();
+        final Path lz4File = Files.createTempFile("lz4test", ".lz4");
         try {
-            try (OutputStream os = new LZ4FrameOutputStream(new FileOutputStream(lz4File),
+            try (OutputStream os = new LZ4FrameOutputStream(Files.newOutputStream(lz4File),
                     LZ4FrameOutputStream.BLOCKSIZE.SIZE_64KB,
                     LZ4FrameOutputStream.FLG.Bits.BLOCK_INDEPENDENCE,
                     LZ4FrameOutputStream.FLG.Bits.BLOCK_CHECKSUM)) {
-                try (InputStream is = new FileInputStream(tmpFile)) {
+                try (InputStream is = Files.newInputStream(tmpFile)) {
                     copy(is, os);
                 }
             }
-            try (InputStream is = new LZ4FrameInputStream(new FileInputStream(lz4File))) {
+            try (InputStream is = new LZ4FrameInputStream(Files.newInputStream(lz4File))) {
                 validateStreamEquals(is, tmpFile);
             }
         } finally {
-            lz4File.delete();
+            Files.deleteIfExists(lz4File);
         }
     }
 
@@ -398,17 +394,17 @@ public class LZ4FrameIOStreamTest {
     @MethodSource("testSizes")
     public void testInputOutputMultipleFrames(int testSize) throws IOException {
         setUp(testSize);
-        final File lz4File = Files.createTempFile("lz4test", ".lz4").toFile();
+        final Path lz4File = Files.createTempFile("lz4test", ".lz4");
         try {
-            try (OutputStream os = new LZ4FrameOutputStream(new FileOutputStream(lz4File))) {
-                try (InputStream is = new FileInputStream(tmpFile)) {
+            try (OutputStream os = new LZ4FrameOutputStream(Files.newOutputStream(lz4File))) {
+                try (InputStream is = Files.newInputStream(tmpFile)) {
                     copy(is, os);
                 }
             }
-            final long oneLength = lz4File.length();
-            try (OutputStream os = new FileOutputStream(lz4File, true)) {
+            final long oneLength = Files.size(lz4File);
+            try (OutputStream os = Files.newOutputStream(lz4File, StandardOpenOption.APPEND)) {
                 for (int i = 0; i < 3; ++i) {
-                    try (InputStream is = new FileInputStream(lz4File)) {
+                    try (InputStream is = Files.newInputStream(lz4File)) {
                         long size = oneLength;
                         while (size > 0) {
                             final byte[] buff = new byte[Math.min((int) size, 1 << 10)];
@@ -419,7 +415,7 @@ public class LZ4FrameIOStreamTest {
                     }
                 }
             }
-            try (LZ4FrameInputStream is = new LZ4FrameInputStream(new FileInputStream(lz4File))) {
+            try (LZ4FrameInputStream is = new LZ4FrameInputStream(Files.newInputStream(lz4File))) {
                 Assertions.assertThrows(UnsupportedOperationException.class, is::getExpectedContentSize);
                 Assertions.assertFalse(is.isExpectedContentSizeDefined());
                 validateStreamEquals(is, tmpFile);
@@ -427,7 +423,7 @@ public class LZ4FrameIOStreamTest {
                 validateStreamEquals(is, tmpFile);
                 validateStreamEquals(is, tmpFile);
             }
-            try (LZ4FrameInputStream is = new LZ4FrameInputStream(new FileInputStream(lz4File), true)) {
+            try (LZ4FrameInputStream is = new LZ4FrameInputStream(Files.newInputStream(lz4File), true)) {
                 Assertions.assertEquals(-1L, is.getExpectedContentSize());
                 Assertions.assertFalse(is.isExpectedContentSizeDefined());
                 validateStreamEquals(is, tmpFile);
@@ -437,7 +433,7 @@ public class LZ4FrameIOStreamTest {
                 Assertions.assertEquals(0, is.skip(1));
             }
         } finally {
-            lz4File.delete();
+            Files.deleteIfExists(lz4File);
         }
     }
 
@@ -451,8 +447,8 @@ public class LZ4FrameIOStreamTest {
     }
 
     private void nativeCompress(String... args) throws IOException, InterruptedException {
-        final File lz4File = Files.createTempFile("lz4test", ".lz4").toFile();
-        lz4File.delete();
+        final Path lz4File = Files.createTempFile("lz4test", ".lz4");
+        Files.deleteIfExists(lz4File);
         try {
             final ProcessBuilder builder = new ProcessBuilder();
             final ArrayList<String> cmd = new ArrayList<>();
@@ -460,18 +456,18 @@ public class LZ4FrameIOStreamTest {
             if (args != null) {
                 cmd.addAll(Arrays.asList(args));
             }
-            cmd.add(tmpFile.getAbsolutePath());
-            cmd.add(lz4File.getAbsolutePath());
+            cmd.add(tmpFile.toAbsolutePath().toString());
+            cmd.add(lz4File.toAbsolutePath().toString());
             builder.command(cmd.toArray(new String[0]));
             builder.inheritIO();
             Process process = builder.start();
             int retval = process.waitFor();
             Assertions.assertEquals(0, retval);
-            try (InputStream is = new LZ4FrameInputStream(new FileInputStream(lz4File))) {
+            try (InputStream is = new LZ4FrameInputStream(Files.newInputStream(lz4File))) {
                 validateStreamEquals(is, tmpFile);
             }
         } finally {
-            lz4File.delete();
+            Files.deleteIfExists(lz4File);
         }
     }
 
@@ -504,36 +500,36 @@ public class LZ4FrameIOStreamTest {
     public void testNativeDecompressIfAvailable(int testSize) throws IOException, InterruptedException {
         setUp(testSize);
         Assumptions.assumeTrue(hasLz4CLI);
-        final File lz4File = Files.createTempFile("lz4test", ".lz4").toFile();
-        final File unCompressedFile = Files.createTempFile("lz4raw", ".dat").toFile();
-        unCompressedFile.delete();
-        lz4File.delete();
+        final Path lz4File = Files.createTempFile("lz4test", ".lz4");
+        final Path unCompressedFile = Files.createTempFile("lz4raw", ".dat");
+        Files.deleteIfExists(unCompressedFile);
+        Files.deleteIfExists(lz4File);
         try {
-            try (OutputStream os = new LZ4FrameOutputStream(new FileOutputStream(lz4File),
+            try (OutputStream os = new LZ4FrameOutputStream(Files.newOutputStream(lz4File),
                     LZ4FrameOutputStream.BLOCKSIZE.SIZE_4MB,
-                    tmpFile.length(),
+                    Files.size(tmpFile),
                     LZ4FrameOutputStream.FLG.Bits.BLOCK_INDEPENDENCE,
                     LZ4FrameOutputStream.FLG.Bits.CONTENT_SIZE,
                     LZ4FrameOutputStream.FLG.Bits.CONTENT_CHECKSUM)) {
-                try (InputStream is = new FileInputStream(tmpFile)) {
+                try (InputStream is = Files.newInputStream(tmpFile)) {
                     copy(is, os);
                 }
             }
-            try (InputStream is = new LZ4FrameInputStream(new FileInputStream(lz4File))) {
+            try (InputStream is = new LZ4FrameInputStream(Files.newInputStream(lz4File))) {
                 validateStreamEquals(is, tmpFile);
             }
 
             final ProcessBuilder builder = new ProcessBuilder();
-            builder.command("lz4", "-d", "-vvvvvvv", lz4File.getAbsolutePath(), unCompressedFile.getAbsolutePath()).inheritIO();
+            builder.command("lz4", "-d", "-vvvvvvv", lz4File.toAbsolutePath().toString(), unCompressedFile.toAbsolutePath().toString()).inheritIO();
             Process process = builder.start();
             int retval = process.waitFor();
             Assertions.assertEquals(0, retval);
-            try (InputStream is = new FileInputStream(unCompressedFile)) {
+            try (InputStream is = Files.newInputStream(unCompressedFile)) {
                 validateStreamEquals(is, tmpFile);
             }
         } finally {
-            lz4File.delete();
-            unCompressedFile.delete();
+            Files.deleteIfExists(lz4File);
+            Files.deleteIfExists(unCompressedFile);
         }
     }
 
@@ -554,20 +550,20 @@ public class LZ4FrameIOStreamTest {
             Assertions.assertThrows(IOException.class, is::read);
         }
 
-        final File lz4File = Files.createTempFile("lz4test", ".lz4").toFile();
+        final Path lz4File = Files.createTempFile("lz4test", ".lz4");
         try {
-            try (OutputStream os = new LZ4FrameOutputStream(new FileOutputStream(lz4File))) {
-                try (InputStream is = new FileInputStream(tmpFile)) {
+            try (OutputStream os = new LZ4FrameOutputStream(Files.newOutputStream(lz4File))) {
+                try (InputStream is = Files.newInputStream(tmpFile)) {
                     copy(is, os);
                 }
             }
             // Extra one byte at the tail
-            try (InputStream is = new LZ4FrameInputStream(new SequenceInputStream(new FileInputStream(lz4File), new ByteArrayInputStream(new byte[1])))) {
+            try (InputStream is = new LZ4FrameInputStream(new SequenceInputStream(Files.newInputStream(lz4File), new ByteArrayInputStream(new byte[1])))) {
                 validateStreamEquals(is, tmpFile);
                 Assertions.assertThrows(IOException.class, is::read);
             }
         } finally {
-            lz4File.delete();
+            Files.deleteIfExists(lz4File);
         }
     }
 
@@ -575,15 +571,15 @@ public class LZ4FrameIOStreamTest {
     @MethodSource("testSizes")
     public void testAvailable(int testSize) throws IOException {
         setUp(testSize);
-        final File lz4File = Files.createTempFile("lz4test", ".lz4").toFile();
+        final Path lz4File = Files.createTempFile("lz4test", ".lz4");
         try {
-            try (OutputStream os = new LZ4FrameOutputStream(new FileOutputStream(lz4File))) {
-                try (InputStream is = new FileInputStream(tmpFile)) {
+            try (OutputStream os = new LZ4FrameOutputStream(Files.newOutputStream(lz4File))) {
+                try (InputStream is = Files.newInputStream(tmpFile)) {
                     copy(is, os);
                 }
             }
 
-            try (InputStream is = new LZ4FrameInputStream(new FileInputStream(lz4File))) {
+            try (InputStream is = new LZ4FrameInputStream(Files.newInputStream(lz4File))) {
                 Assertions.assertEquals(0, is.available(), "available() should be 0 before first read");
 
                 if (is.read() != -1 && testSize > 1) {
@@ -594,7 +590,7 @@ public class LZ4FrameIOStreamTest {
                 }
             }
         } finally {
-            lz4File.delete();
+            Files.deleteIfExists(lz4File);
         }
     }
 }
