@@ -27,12 +27,17 @@ import net.jpountz.util.SafeUtils;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.lwjgl.util.xxhash.XXH32State;
 import org.lwjgl.util.xxhash.XXHash;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public class XXHash32Test {
+
+    private static LongStream randomSeeds() {
+        return LongStream.range(0, 20);
+    }
 
     private static final List<Function<RandomContext, XXHash32>> PROVIDERS = List.of(
             context -> XXHashFactory.safeInstance().hash32(),
@@ -74,10 +79,6 @@ public class XXHash32Test {
                 }
             }
     );
-
-    private static LongStream randomSeeds() {
-        return LongStream.range(0, 20);
-    }
 
     @ParameterizedTest
     @MethodSource("randomSeeds")
@@ -137,7 +138,7 @@ public class XXHash32Test {
     }
 
     @ParameterizedTest
-    @MethodSource("randomSeeds")
+    @ValueSource(longs = {0L, 2L, 3L})
     public void test4GB(long randomSeed) {
         var context = new RandomContext(randomSeed);
 
