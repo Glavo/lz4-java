@@ -25,8 +25,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ReadOnlyBufferException;
 import java.util.Arrays;
-import java.io.File;
-import java.io.FilenameFilter;
 
 import org.junit.Test;
 
