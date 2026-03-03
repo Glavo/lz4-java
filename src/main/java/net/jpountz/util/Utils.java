@@ -18,22 +18,12 @@ package net.jpountz.util;
 
 import java.nio.ByteOrder;
 
-/** <b>FOR INTERNAL USE ONLY</b> */
+/**
+ * <b>FOR INTERNAL USE ONLY</b>
+ */
 public enum Utils {
-  ;
+    ;
 
-  public static final ByteOrder NATIVE_BYTE_ORDER = ByteOrder.nativeOrder();
-
-  private static final boolean unalignedAccessAllowed;
-  static {
-    String arch = System.getProperty("os.arch");
-    unalignedAccessAllowed = arch.equals("i386") || arch.equals("x86")
-      || arch.equals("amd64") || arch.equals("x86_64")
-      || arch.equals("aarch64") || arch.equals("ppc64le");
-  }
-
-  public static boolean isUnalignedAccessAllowed() {
-    return unalignedAccessAllowed;
-  }
+    public static final ByteOrder NATIVE_BYTE_ORDER = ByteOrder.nativeOrder();
 
 }

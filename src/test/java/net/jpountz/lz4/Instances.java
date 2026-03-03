@@ -18,27 +18,27 @@ package net.jpountz.lz4;
 
 
 enum Instances {
-  ;
+    ;
 
-  static LZ4Compressor[] COMPRESSORS = new LZ4Compressor[] {
-    LZ4Factory.nativeInstance().fastCompressor(),
-    LZ4Factory.nativeInstance().highCompressor(),
-    LZ4Factory.unsafeInsecureInstance().fastCompressor(),
-    LZ4Factory.unsafeInsecureInstance().highCompressor(),
-    LZ4Factory.safeInstance().fastCompressor(),
-    LZ4Factory.safeInstance().highCompressor()
-  };
+    static LZ4Compressor[] COMPRESSORS = new LZ4Compressor[]{
+            LZ4Factory.nativeInstance().fastCompressor(),
+            LZ4Factory.nativeInstance().highCompressor(),
+            LZ4Factory.unsafeInsecureInstance().fastCompressor(),
+            LZ4Factory.unsafeInsecureInstance().highCompressor(),
+            LZ4Factory.safeInstance().fastCompressor(),
+            LZ4Factory.safeInstance().highCompressor()
+    };
 
-  static LZ4FastDecompressor[] FAST_DECOMPRESSORS = new LZ4FastDecompressor[] {
-    LZ4Factory.nativeInsecureInstance().fastDecompressor(),
-    LZ4Factory.unsafeInsecureInstance().fastDecompressor(),
-    LZ4Factory.safeInstance().fastDecompressor()
-  };
+    static LZ4FastDecompressor[] FAST_DECOMPRESSORS = new LZ4FastDecompressor[]{
+            LZ4Factory.nativeInsecureInstance().fastDecompressor(),
+            LZ4Factory.unsafeInsecureInstance().fastDecompressor(),
+            LZ4Factory.safeInstance().fastDecompressor()
+    };
 
-  static LZ4SafeDecompressor[] SAFE_DECOMPRESSORS = new LZ4SafeDecompressor[] {
-    LZ4Factory.nativeInstance().safeDecompressor(),
-    LZ4Factory.unsafeInsecureInstance().safeDecompressor(),
-    LZ4Factory.safeInstance().safeDecompressor()
-  };
+    static LZ4SafeDecompressor[] SAFE_DECOMPRESSORS = new LZ4SafeDecompressor[]{
+            LZ4Factory.nativeInstance().safeDecompressor(),
+            LZ4Factory.unsafeInsecureInstance().safeDecompressor(),
+            LZ4Factory.safeInstance().safeDecompressor()
+    };
 
 }

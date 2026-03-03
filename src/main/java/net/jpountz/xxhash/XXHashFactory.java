@@ -18,10 +18,6 @@ package net.jpountz.xxhash;
 
 import java.lang.reflect.Field;
 import java.util.Random;
-import java.util.function.IntUnaryOperator;
-
-import net.jpountz.util.Native;
-import net.jpountz.util.Utils;
 
 /// Entry point to get [XXHash32] and [StreamingXXHash32] instances.
 ///
