@@ -74,6 +74,24 @@ public final class RandomContext {
         return result;
     }
 
+    public byte[] nextBytes(int len, int dictionarySize) {
+        byte[] dictionary = nextBytes(dictionarySize);
+
+        byte[] result = new byte[len];
+        for (int i = 0; i < len; i++) {
+            result[i] = dictionary[nextInt(dictionarySize)];
+        }
+        return result;
+    }
+
+    public boolean percentage(int percent) {
+        return nextInt(100) < percent;
+    }
+
+    public boolean rarely() {
+        return nextInt(100) >= 90;
+    }
+
     public ByteBuffer copyOf(byte[] bytes, int offset, int length) {
         ByteBuffer buffer;
         if (random.nextBoolean()) {

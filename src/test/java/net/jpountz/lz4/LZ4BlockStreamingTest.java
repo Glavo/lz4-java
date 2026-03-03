@@ -25,59 +25,64 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.function.Consumer;
+import java.util.stream.LongStream;
 import java.util.zip.Adler32;
 import java.util.zip.CRC32;
 import java.util.zip.Checksum;
 
-import com.carrotsearch.randomizedtesting.annotations.ParametersFactory;
+import net.jpountz.RandomContext;
 import net.jpountz.xxhash.XXHashFactory;
-
-import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-import com.carrotsearch.randomizedtesting.annotations.Repeat;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.FieldSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
-public class LZ4BlockStreamingTest extends AbstractLZ4Test {
+public abstract class LZ4BlockStreamingTest extends AbstractLZ4Test {
 
-    private final Consumer<LZ4BlockInputStream.Builder> decompressorConfigurer;
-
-    public LZ4BlockStreamingTest(Consumer<LZ4BlockInputStream.Builder> decompressorConfigurer) {
-        this.decompressorConfigurer = decompressorConfigurer;
+    public static final class FastTest extends LZ4BlockStreamingTest {
+        @Override
+        protected void setDecompressor(LZ4BlockInputStream.Builder builder) {
+            builder.withDecompressor(LZ4Factory.fastestInstance().fastDecompressor());
+        }
     }
 
-    @ParametersFactory
-    public static Iterable<Object[]> decompressorConfigurers() {
-        return Arrays.asList(new Object[][]{
-                // Don't create Builder here, otherwise the same Builder instance would be used for all tests, and the
-                // tests would interfere with each other due to the modifications to the builder
-                {(Consumer<LZ4BlockInputStream.Builder>) builder -> builder.withDecompressor(LZ4Factory.fastestInstance().fastDecompressor())},
-                {(Consumer<LZ4BlockInputStream.Builder>) builder -> builder.withDecompressor(LZ4Factory.fastestInstance().safeDecompressor())}
-        });
+    public static final class SafeTest extends LZ4BlockStreamingTest {
+        @Override
+        protected void setDecompressor(LZ4BlockInputStream.Builder builder) {
+            builder.withDecompressor(LZ4Factory.fastestInstance().safeDecompressor());
+        }
     }
+
+    protected abstract void setDecompressor(LZ4BlockInputStream.Builder builder);
 
     private LZ4BlockInputStream.Builder lz4BlockInputStreamBuilder() {
         var builder = LZ4BlockInputStream.newBuilder();
-        decompressorConfigurer.accept(builder);
+        setDecompressor(builder);
         return builder;
     }
 
     // An input stream that might read less data than it is able to
     class MockInputStream extends FilterInputStream {
 
-        MockInputStream(InputStream in) {
+        private final RandomContext context;
+
+        MockInputStream(InputStream in, RandomContext context) {
             super(in);
+            this.context = context;
         }
 
         @Override
         public int read(byte[] b, int off, int len) throws IOException {
-            return super.read(b, off, randomIntBetween(0, len));
+            return super.read(b, off, context.nextInt(len + 1));
         }
 
         @Override
         public long skip(long n) throws IOException {
-            return super.skip(randomInt((int) Math.min(n, Integer.MAX_VALUE)));
+            return super.skip(context.nextInt((int) Math.min(n + 1, Integer.MAX_VALUE)));
         }
 
     }
@@ -85,12 +90,14 @@ public class LZ4BlockStreamingTest extends AbstractLZ4Test {
     // an output stream that delays the actual writes
     class MockOutputStream extends FilterOutputStream {
 
+        private final RandomContext context;
         private final byte[] buffer;
         private int delayedBytes;
 
-        MockOutputStream(OutputStream out) {
+        MockOutputStream(OutputStream out, RandomContext context) {
             super(out);
-            buffer = new byte[randomIntBetween(10, 1000)];
+            this.context = context;
+            buffer = new byte[context.nextInt(10, 1000)];
             delayedBytes = 0;
         }
 
@@ -107,7 +114,7 @@ public class LZ4BlockStreamingTest extends AbstractLZ4Test {
 
         @Override
         public void write(int b) throws IOException {
-            if (rarely()) {
+            if (context.rarely()) {
                 flushPendingData();
             } else {
                 flushIfNecessary();
@@ -117,12 +124,12 @@ public class LZ4BlockStreamingTest extends AbstractLZ4Test {
 
         @Override
         public void write(byte[] b, int off, int len) throws IOException {
-            if (rarely()) {
+            if (context.rarely()) {
                 flushPendingData();
             }
             if (len + delayedBytes > buffer.length) {
                 flushPendingData();
-                delayedBytes = randomInt(Math.min(len, buffer.length));
+                delayedBytes = context.nextInt(Math.min(len, buffer.length) + 1);
                 out.write(b, off, len - delayedBytes);
                 System.arraycopy(b, off + len - delayedBytes, buffer, 0, delayedBytes);
             } else {
@@ -149,69 +156,58 @@ public class LZ4BlockStreamingTest extends AbstractLZ4Test {
 
     }
 
-    private InputStream open(byte[] data) {
-        return new MockInputStream(new ByteArrayInputStream(data));
+    private InputStream open(RandomContext context, byte[] data) {
+        return new MockInputStream(new ByteArrayInputStream(data), context);
     }
 
-    private OutputStream wrap(OutputStream other) {
-        return new MockOutputStream(other);
+    private OutputStream wrap(RandomContext context, OutputStream other) {
+        return new MockOutputStream(other, context);
     }
 
-    @Test
-    @Repeat(iterations = 5)
-    public void testRoundtripGeo() throws IOException {
-        testRoundTrip("/calgary/geo");
+    @ParameterizedTest
+    @ValueSource(longs = {0L, 1L, 2L, 3L, 4L})
+    public void testRoundtripGeo(long randomSeed) throws IOException {
+        var context = new RandomContext(randomSeed);
+        testRoundTrip(context, "/calgary/geo");
     }
 
-    @Test
-    @Repeat(iterations = 5)
-    public void testRoundtripBook1() throws IOException {
-        testRoundTrip("/calgary/book1");
+    @ParameterizedTest
+    @ValueSource(longs = {0L, 1L, 2L, 3L, 4L})
+    public void testRoundtripBook1(long randomSeed) throws IOException {
+        var context = new RandomContext(randomSeed);
+        testRoundTrip(context, "/calgary/book1");
     }
 
-    @Test
-    @Repeat(iterations = 5)
-    public void testRoundtripPic() throws IOException {
-        testRoundTrip("/calgary/pic");
+    @ParameterizedTest
+    @ValueSource(longs = {0L, 1L, 2L, 3L, 4L})
+    public void testRoundtripPic(long randomSeed) throws IOException {
+        var context = new RandomContext(randomSeed);
+        testRoundTrip(context, "/calgary/pic");
     }
 
-    public void testRoundTrip(String resource) throws IOException {
-        testRoundTrip(readResource(resource));
+    public void testRoundTrip(RandomContext context, String resource) throws IOException {
+        testRoundTrip(context, readResource(resource));
     }
 
-    public void testRoundTrip(byte[] data) throws IOException {
+    public void testRoundTrip(RandomContext context, byte[] data) throws IOException {
         final ByteArrayOutputStream compressed = new ByteArrayOutputStream();
-        final int blockSize;
-        switch (randomInt(2)) {
-            case 0:
-                blockSize = LZ4BlockOutputStream.MIN_BLOCK_SIZE;
-                break;
-            case 1:
-                blockSize = LZ4BlockOutputStream.MAX_BLOCK_SIZE;
-                break;
-            default:
-                blockSize = randomIntBetween(LZ4BlockOutputStream.MIN_BLOCK_SIZE, LZ4BlockOutputStream.MAX_BLOCK_SIZE);
-                break;
-        }
-        final LZ4Compressor compressor = randomBoolean()
+        final int blockSize = switch (context.nextInt(3)) {
+            case 0 -> LZ4BlockOutputStream.MIN_BLOCK_SIZE;
+            case 1 -> LZ4BlockOutputStream.MAX_BLOCK_SIZE;
+            default -> context.nextInt(LZ4BlockOutputStream.MIN_BLOCK_SIZE, LZ4BlockOutputStream.MAX_BLOCK_SIZE + 1);
+        };
+        final LZ4Compressor compressor = context.nextBoolean()
                 ? LZ4Factory.fastestInstance().fastCompressor()
                 : LZ4Factory.fastestInstance().highCompressor();
-        final Checksum checksum;
-        switch (randomInt(2)) {
-            case 0:
-                checksum = new Adler32();
-                break;
-            case 1:
-                checksum = new CRC32();
-                break;
-            default:
-                checksum = XXHashFactory.fastestInstance().newStreamingHash32(randomInt()).asChecksum();
-                break;
-        }
-        final boolean syncFlush = randomBoolean();
-        final LZ4BlockOutputStream os = new LZ4BlockOutputStream(wrap(compressed), blockSize, compressor, checksum, syncFlush);
+        final Checksum checksum = switch (context.nextInt(3)) {
+            case 0 -> new Adler32();
+            case 1 -> new CRC32();
+            default -> XXHashFactory.fastestInstance().newStreamingHash32(context.nextInt()).asChecksum();
+        };
+        final boolean syncFlush = context.nextBoolean();
+        final LZ4BlockOutputStream os = new LZ4BlockOutputStream(wrap(context, compressed), blockSize, compressor, checksum, syncFlush);
         final int half = data.length / 2;
-        switch (randomInt(2)) {
+        switch (context.nextInt(3)) {
             case 0:
                 os.write(data, 0, half);
                 for (int i = half; i < data.length; ++i) {
@@ -233,19 +229,19 @@ public class LZ4BlockStreamingTest extends AbstractLZ4Test {
         final LZ4BlockInputStream.Builder builder = lz4BlockInputStreamBuilder()
                 .withStopOnEmptyBlock(true)
                 .withChecksum(checksum);
-        InputStream is = builder.build(open(compressed.toByteArray()));
-        assertFalse(is.markSupported());
+        InputStream is = builder.build(open(context, compressed.toByteArray()));
+        Assertions.assertFalse(is.markSupported());
         try {
             is.mark(1);
             is.reset();
-            assertFalse(true);
+            Assertions.fail();
         } catch (IOException e) {
             // OK
         }
         byte[] restored = new byte[data.length + 1000];
         int read = 0;
         while (true) {
-            if (randomFloat() < 0.01f) {
+            if (context.percentage(1)) {
                 final int r = is.read(restored, read, restored.length - read);
                 if (r == -1) {
                     break;
@@ -262,41 +258,46 @@ public class LZ4BlockStreamingTest extends AbstractLZ4Test {
             }
         }
         is.close();
-        assertEquals(data.length, read);
-        assertArrayEquals(data, Arrays.copyOf(restored, read));
+        Assertions.assertEquals(data.length, read);
+        Assertions.assertArrayEquals(data, Arrays.copyOf(restored, read));
 
         // test skip
-        final int offset = data.length <= 1 ? 0 : randomInt(data.length - 1);
-        final int length = randomInt(data.length - offset);
-        is = builder.build(open(compressed.toByteArray()));
+        final int offset = data.length <= 1 ? 0 : context.nextInt(data.length);
+        final int length = context.nextInt(data.length - offset + 1);
+        is = builder.build(open(context, compressed.toByteArray()));
         restored = new byte[length + 1000];
         read = 0;
         while (read < offset) {
             final long skipped = is.skip(offset - read);
-            assertTrue(skipped >= 0);
+            Assertions.assertTrue(skipped >= 0);
             read += skipped;
         }
         read = 0;
         while (read < length) {
             final int r = is.read(restored, read, length - read);
-            assertTrue(r >= 0);
+            Assertions.assertTrue(r >= 0);
             read += r;
         }
         is.close();
-        assertArrayEquals(Arrays.copyOfRange(data, offset, offset + length), Arrays.copyOfRange(restored, 0, length));
+        Assertions.assertArrayEquals(Arrays.copyOfRange(data, offset, offset + length), Arrays.copyOfRange(restored, 0, length));
     }
 
-    @Test
-    @Repeat(iterations = 20)
-    public void testRoundtripRandom() throws IOException {
-        final int size = randomFloat() < 0.1f ? randomInt(5) : randomInt(1 << 20);
-        final byte[] data = randomArray(size, randomBoolean() ? randomIntBetween(1, 5) : randomIntBetween(6, 100));
-        testRoundTrip(data);
+
+    private static final long[] RANDOM_SEEDS_20 = LongStream.range(0, 20).toArray();
+
+    @ParameterizedTest
+    @FieldSource("RANDOM_SEEDS_20")
+    public void testRoundtripRandom(long randomSeed) throws IOException {
+        var context = new RandomContext(randomSeed);
+
+        final int size = context.percentage(1) ? context.nextInt(6) : context.nextInt(1 << 20);
+        final byte[] data = context.nextBytes(size, context.nextBoolean() ? context.nextInt(1, 6) : context.nextInt(6, 100));
+        testRoundTrip(context, data);
     }
 
     @Test
     public void testRoundtripEmpty() throws IOException {
-        testRoundTrip(new byte[0]);
+        testRoundTrip(new RandomContext(0L), new byte[0]);
     }
 
     @Test
@@ -317,7 +318,7 @@ public class LZ4BlockStreamingTest extends AbstractLZ4Test {
         byte[] actual = new byte[testBytes.length];
         in.read(actual);
 
-        assertArrayEquals(testBytes, actual);
+        Assertions.assertArrayEquals(testBytes, actual);
 
         in.close();
         in.close();
@@ -337,8 +338,9 @@ public class LZ4BlockStreamingTest extends AbstractLZ4Test {
 
     @Test
     public void testConcatenationOfSerializedStreams() throws IOException {
-        final byte[] testBytes1 = randomArray(64, 256);
-        final byte[] testBytes2 = randomArray(64, 256);
+        var context = new RandomContext(0L);
+        final byte[] testBytes1 = context.nextBytes(64, 256);
+        final byte[] testBytes2 = context.nextBytes(64, 256);
         byte[] expected = new byte[128];
         System.arraycopy(testBytes1, 0, expected, 0, 64);
         System.arraycopy(testBytes2, 0, expected, 64, 64);
@@ -364,8 +366,8 @@ public class LZ4BlockStreamingTest extends AbstractLZ4Test {
                 .withStopOnEmptyBlock(true)
                 .build(new ByteArrayInputStream(concatenatedBytes));
         byte[] actual1 = new byte[128];
-        assertEquals(64, readFully(in1, actual1));
-        assertEquals(-1, in1.read());
+        Assertions.assertEquals(64, readFully(in1, actual1));
+        Assertions.assertEquals(-1, in1.read());
         in1.close();
 
         // Check if we can read concatenated byte stream
@@ -373,11 +375,11 @@ public class LZ4BlockStreamingTest extends AbstractLZ4Test {
                 .withStopOnEmptyBlock(false)
                 .build(new ByteArrayInputStream(concatenatedBytes));
         byte[] actual2 = new byte[128];
-        assertEquals(128, readFully(in2, actual2));
-        assertEquals(-1, in2.read());
+        Assertions.assertEquals(128, readFully(in2, actual2));
+        Assertions.assertEquals(-1, in2.read());
         in2.close();
 
-        assertArrayEquals(expected, actual2);
+        Assertions.assertArrayEquals(expected, actual2);
     }
 
     @Test
@@ -391,7 +393,7 @@ public class LZ4BlockStreamingTest extends AbstractLZ4Test {
                 -125, -47, -30, 10, 64, 0, 1, 2, 3, 76, 90, 52, 66, 108, 111, 99, 107, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         };
         var e = assertThrows(IOException.class, () -> lz4BlockInputStreamBuilder().build(new ByteArrayInputStream(bytesWrongCompressed)).readAllBytes());
-        assertEquals("Stream is corrupted", e.getMessage());
+        Assertions.assertEquals("Stream is corrupted", e.getMessage());
 
         byte[] bytesWrongDecompressed = {
                 76, 90, 52, 66, 108, 111, 99, 107, 32,
@@ -402,6 +404,6 @@ public class LZ4BlockStreamingTest extends AbstractLZ4Test {
                 -125, -47, -30, 10, 64, 0, 1, 2, 3, 76, 90, 52, 66, 108, 111, 99, 107, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         };
         e = assertThrows(IOException.class, () -> lz4BlockInputStreamBuilder().build(new ByteArrayInputStream(bytesWrongDecompressed)).readAllBytes());
-        assertEquals("Stream is corrupted", e.getMessage());
+        Assertions.assertEquals("Stream is corrupted", e.getMessage());
     }
 }

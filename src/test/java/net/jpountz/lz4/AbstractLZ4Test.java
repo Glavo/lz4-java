@@ -16,22 +16,21 @@ package net.jpountz.lz4;
  * limitations under the License.
  */
 
-import java.io.ByteArrayOutputStream;
+import net.jpountz.RandomContext;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
 
-import com.carrotsearch.randomizedtesting.RandomizedTest;
-
-public abstract class AbstractLZ4Test extends RandomizedTest {
+public abstract class AbstractLZ4Test {
 
     public interface TesterBase<T> {
 
-        T allocate(int length);
+        T allocate(RandomContext context, int length);
 
-        T copyOf(byte[] array);
+        T copyOf(RandomContext context, byte[] array);
 
         byte[] copyOf(T data, int off, int len);
 
@@ -42,12 +41,12 @@ public abstract class AbstractLZ4Test extends RandomizedTest {
         class ByteArrayTesterBase implements TesterBase<byte[]> {
 
             @Override
-            public byte[] allocate(int length) {
+            public byte[] allocate(RandomContext context, int length) {
                 return new byte[length];
             }
 
             @Override
-            public byte[] copyOf(byte[] array) {
+            public byte[] copyOf(RandomContext context, byte[] array) {
                 return Arrays.copyOf(array, array.length);
             }
 
@@ -70,28 +69,24 @@ public abstract class AbstractLZ4Test extends RandomizedTest {
         class ByteBufferTesterBase implements TesterBase<ByteBuffer> {
 
             @Override
-            public ByteBuffer allocate(int length) {
+            public ByteBuffer allocate(RandomContext context, int length) {
                 ByteBuffer bb;
-                int slice = randomInt(5);
-                if (randomBoolean()) {
+                int slice = context.nextInt(6);
+                if (context.nextBoolean()) {
                     bb = ByteBuffer.allocate(length + slice);
                 } else {
                     bb = ByteBuffer.allocateDirect(length + slice);
                 }
                 bb.position(slice);
                 bb = bb.slice();
-                if (randomBoolean()) {
-                    bb.order(ByteOrder.LITTLE_ENDIAN);
-                } else {
-                    bb.order(ByteOrder.BIG_ENDIAN);
-                }
+                bb.order(context.nextBoolean() ? ByteOrder.LITTLE_ENDIAN : ByteOrder.BIG_ENDIAN);
                 return bb;
             }
 
             @Override
-            public ByteBuffer copyOf(byte[] array) {
-                ByteBuffer bb = allocate(array.length).put(array);
-                if (randomBoolean()) {
+            public ByteBuffer copyOf(RandomContext context, byte[] array) {
+                ByteBuffer bb = allocate(context, array.length).put(array);
+                if (context.nextBoolean()) {
                     bb = bb.asReadOnlyBuffer();
                 }
                 bb.position(0);
@@ -307,67 +302,13 @@ public abstract class AbstractLZ4Test extends RandomizedTest {
         };
     }
 
-    protected class RandomBytes {
-        private final byte[] bytes;
-
-        RandomBytes(int n) {
-            assert n > 0 && n <= 256;
-            bytes = new byte[n];
-            for (int i = 0; i < n; ++i) {
-                bytes[i] = (byte) randomInt(255);
-            }
-        }
-
-        byte next() {
-            final int i = randomInt(bytes.length - 1);
-            return bytes[i];
-        }
-    }
-
     protected static byte[] readResource(String resource) throws IOException {
-        InputStream is = LZ4Test.class.getResourceAsStream(resource);
-        if (is == null) {
-            throw new IllegalStateException("Cannot find " + resource);
-        }
-        byte[] buf = new byte[4096];
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        try {
-            while (true) {
-                final int read = is.read(buf);
-                if (read == -1) {
-                    break;
-                }
-                baos.write(buf, 0, read);
+        try (InputStream is = LZ4Test.class.getResourceAsStream(resource)) {
+            if (is == null) {
+                throw new IllegalStateException("Cannot find " + resource);
             }
-        } finally {
-            is.close();
+            return is.readAllBytes();
         }
-        return baos.toByteArray();
-    }
-
-    protected byte[] randomArray(int len, int n) {
-        byte[] result = new byte[len];
-        RandomBytes randomBytes = new RandomBytes(n);
-        for (int i = 0; i < result.length; ++i) {
-            result[i] = randomBytes.next();
-        }
-        return result;
-    }
-
-    protected ByteBuffer copyOf(byte[] bytes, int offset, int len) {
-        ByteBuffer buffer;
-        if (randomBoolean()) {
-            buffer = ByteBuffer.allocate(bytes.length);
-        } else {
-            buffer = ByteBuffer.allocateDirect(bytes.length);
-        }
-        buffer.put(bytes);
-        buffer.position(offset);
-        buffer.limit(offset + len);
-        if (randomBoolean()) {
-            buffer = buffer.asReadOnlyBuffer();
-        }
-        return buffer;
     }
 
 }

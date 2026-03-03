@@ -19,29 +19,37 @@ package net.jpountz.lz4;
 import static net.jpountz.lz4.Instances.COMPRESSORS;
 import static net.jpountz.lz4.Instances.FAST_DECOMPRESSORS;
 import static net.jpountz.lz4.Instances.SAFE_DECOMPRESSORS;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ReadOnlyBufferException;
 import java.util.Arrays;
+import java.util.stream.LongStream;
 
-import org.junit.Test;
+import net.jpountz.RandomContext;
 
-import static org.junit.Assert.*;
-
-import com.carrotsearch.randomizedtesting.annotations.Repeat;
-import com.carrotsearch.randomizedtesting.annotations.Seed;
-import com.carrotsearch.randomizedtesting.annotations.Seeds;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.FieldSource;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.lwjgl.util.lz4.LZ4;
 
 public class LZ4Test extends AbstractLZ4Test {
 
-    @Test
-    @Repeat(iterations = 50)
-    public void testMaxCompressedLength() {
-        final int len = randomBoolean() ? randomInt(16) : randomInt(1 << 30);
+    private static final long[] RANDOM_SEEDS_50 = LongStream.range(0, 50).toArray();
+
+    @ParameterizedTest
+    @FieldSource("RANDOM_SEEDS_50")
+    public void testMaxCompressedLength(long randomSeed) {
+        var context = new RandomContext(randomSeed);
+
+        final int len = context.nextBoolean() ? context.nextInt(17) : context.nextInt(1 << 30);
+
         for (LZ4Compressor compressor : COMPRESSORS) {
-            // TODO: assertEquals(LZ4JNI.LZ4_compressBound(len), compressor.maxCompressedLength(len));
+            assertEquals(LZ4.LZ4_COMPRESSBOUND(len), compressor.maxCompressedLength(len));
         }
     }
 
@@ -69,94 +77,96 @@ public class LZ4Test extends AbstractLZ4Test {
 
     @Test
     public void testEmpty() {
-        testRoundTrip(new byte[0]);
+        testRoundTrip(new RandomContext(0L), new byte[0]);
     }
 
-    public void testUncompressWorstCase(LZ4FastDecompressor decompressor) {
-        final int len = randomInt(100 * 1024);
-        final int max = randomIntBetween(1, 255);
-        byte[] decompressed = randomArray(len, max);
+    public void testUncompressWorstCase(RandomContext context, LZ4FastDecompressor decompressor) {
+        final int len = context.nextInt(100 * 1024);
+        final int max = context.nextInt(1, 256);
+        byte[] decompressed = context.nextBytes(len, max);
         byte[] compressed = getCompressedWorstCase(decompressed);
         byte[] restored = new byte[decompressed.length];
         int cpLen = decompressor.decompress(compressed, 0, restored, 0, decompressed.length);
         assertEquals(compressed.length, cpLen);
-        assertArrayEquals(decompressed, restored);
+        Assertions.assertArrayEquals(decompressed, restored);
     }
 
     @Test
     public void testUncompressWorstCase() {
+        var context = new RandomContext(0L);
         for (LZ4FastDecompressor decompressor : FAST_DECOMPRESSORS) {
-            testUncompressWorstCase(decompressor);
+            testUncompressWorstCase(context, decompressor);
         }
     }
 
-    public void testUncompressWorstCase(LZ4SafeDecompressor decompressor) {
-        final int len = randomInt(100 * 1024);
-        final int max = randomIntBetween(1, 256);
-        byte[] decompressed = randomArray(len, max);
+    public void testUncompressWorstCase(RandomContext context, LZ4SafeDecompressor decompressor) {
+        final int len = context.nextInt(100 * 1024);
+        final int max = context.nextInt(1, 256);
+        byte[] decompressed = context.nextBytes(len, max);
         byte[] compressed = getCompressedWorstCase(decompressed);
         byte[] restored = new byte[decompressed.length];
         int uncpLen = decompressor.decompress(compressed, 0, compressed.length, restored, 0);
         assertEquals(decompressed.length, uncpLen);
-        assertArrayEquals(decompressed, restored);
+        Assertions.assertArrayEquals(decompressed, restored);
     }
 
-    @Seeds({
-            @Seed("69CCC65267F3C588"),  // Seed that generates len < 16
-            @Seed()
+    @ParameterizedTest
+    @ValueSource(longs = {
+            0L, 1L, 2L, 3L, 4L,
+            8847L, 15370L // Seed that generates len < 16
     })
-    @Test
-    public void testUncompressSafeWorstCase() {
+    public void testUncompressSafeWorstCase(long randomSeed) {
+        var context = new RandomContext(randomSeed);
         for (LZ4SafeDecompressor decompressor : SAFE_DECOMPRESSORS) {
-            testUncompressWorstCase(decompressor);
+            testUncompressWorstCase(context, decompressor);
         }
     }
 
-    public void testRoundTrip(byte[] data, int off, int len,
+    public void testRoundTrip(RandomContext context, byte[] data, int off, int len,
                               LZ4Compressor compressor,
                               LZ4FastDecompressor decompressor,
                               LZ4SafeDecompressor decompressor2) {
         for (Tester<?> tester : Arrays.asList(Tester.BYTE_ARRAY, Tester.BYTE_BUFFER, Tester.BYTE_ARRAY_WITH_LENGTH, Tester.BYTE_BUFFER_WITH_LENGTH)) {
-            testRoundTrip(tester, data, off, len, compressor, decompressor, decompressor2);
+            testRoundTrip(context, tester, data, off, len, compressor, decompressor, decompressor2);
         }
         if (data.length == len && off == 0) {
             for (SrcDestTester<?> tester : Arrays.asList(SrcDestTester.BYTE_ARRAY, SrcDestTester.BYTE_BUFFER, SrcDestTester.BYTE_ARRAY_WITH_LENGTH, SrcDestTester.BYTE_BUFFER_WITH_LENGTH)) {
-                testRoundTrip(tester, data, compressor, decompressor, decompressor2);
+                testRoundTrip(context, tester, data, compressor, decompressor, decompressor2);
             }
         }
     }
 
     public <T> void testRoundTrip(
-            Tester<T> tester,
+            RandomContext context, Tester<T> tester,
             byte[] data, int off, int len,
             LZ4Compressor compressor,
             LZ4FastDecompressor decompressor,
             LZ4SafeDecompressor decompressor2) {
         final int maxCompressedLength = tester.maxCompressedLength(len);
         // "maxCompressedLength + 1" for the over-estimated compressed length test below
-        final T compressed = tester.allocate(maxCompressedLength + 1);
+        final T compressed = tester.allocate(context, maxCompressedLength + 1);
         final int compressedLen = tester.compress(compressor,
-                tester.copyOf(data), off, len,
+                tester.copyOf(context, data), off, len,
                 compressed, 0, maxCompressedLength);
 
         // test decompression
-        final T restored = tester.allocate(len);
+        final T restored = tester.allocate(context, len);
         assertEquals(compressedLen, tester.decompress(decompressor, compressed, 0, restored, 0, len));
-        assertArrayEquals(Arrays.copyOfRange(data, off, off + len), tester.copyOf(restored, 0, len));
+        Assertions.assertArrayEquals(Arrays.copyOfRange(data, off, off + len), tester.copyOf(restored, 0, len));
 
         // make sure it fails if the compression dest is not large enough
-        tester.fill(restored, randomByte());
-        final T compressed2 = tester.allocate(compressedLen - 1);
+        tester.fill(restored, context.nextByte());
+        final T compressed2 = tester.allocate(context, compressedLen - 1);
         try {
             final int compressedLen2 = tester.compress(compressor,
-                    tester.copyOf(data), off, len,
+                    tester.copyOf(context, data), off, len,
                     compressed2, 0, compressedLen - 1);
             // Compression can succeed even with the smaller dest
             // because the compressor is allowed to return different compression results
             // even when it is invoked with the same input data.
             // In this case, just make sure the compressed data can be successfully decompressed.
             assertEquals(compressedLen2, tester.decompress(decompressor, compressed2, 0, restored, 0, len));
-            assertArrayEquals(Arrays.copyOfRange(data, off, off + len), tester.copyOf(restored, 0, len));
+            Assertions.assertArrayEquals(Arrays.copyOfRange(data, off, off + len), tester.copyOf(restored, 0, len));
         } catch (LZ4Exception e) {
             // OK
         }
@@ -169,17 +179,17 @@ public class LZ4Test extends AbstractLZ4Test {
                 // decompression dest is too small
                 try {
                     tester.decompress(decompressor, compressed, 0, restored, 0, len - 1);
-                    fail();
+                    Assertions.fail();
                 } catch (LZ4Exception e) {
                     // OK
                 }
             }
 
             // decompression dest is too large
-            final T restored2 = tester.allocate(len + 1);
+            final T restored2 = tester.allocate(context, len + 1);
             try {
                 final int cpLen = tester.decompress(decompressor, compressed, 0, restored2, 0, len + 1);
-                fail("compressedLen=" + cpLen);
+                Assertions.fail("compressedLen=" + cpLen);
             } catch (LZ4Exception e) {
                 // OK
             }
@@ -187,39 +197,39 @@ public class LZ4Test extends AbstractLZ4Test {
 
         // try decompression when only the size of the compressed buffer is known
         if (len > 0) {
-            tester.fill(restored, randomByte());
+            tester.fill(restored, context.nextByte());
             assertEquals(len, tester.decompress(decompressor2, compressed, 0, compressedLen, restored, 0, len));
-            assertArrayEquals(Arrays.copyOfRange(data, off, off + len), tester.copyOf(restored, 0, len));
-            tester.fill(restored, randomByte());
+            Assertions.assertArrayEquals(Arrays.copyOfRange(data, off, off + len), tester.copyOf(restored, 0, len));
+            tester.fill(restored, context.nextByte());
         } else {
-            assertEquals(0, tester.decompress(decompressor2, compressed, 0, compressedLen, tester.allocate(1), 0, 1));
+            assertEquals(0, tester.decompress(decompressor2, compressed, 0, compressedLen, tester.allocate(context, 1), 0, 1));
         }
 
         // over-estimated compressed length
         try {
-            final int decompressedLen = tester.decompress(decompressor2, compressed, 0, compressedLen + 1, tester.allocate(len + 100), 0, len + 100);
-            fail("decompressedLen=" + decompressedLen);
+            final int decompressedLen = tester.decompress(decompressor2, compressed, 0, compressedLen + 1, tester.allocate(context, len + 100), 0, len + 100);
+            Assertions.fail("decompressedLen=" + decompressedLen);
         } catch (LZ4Exception e) {
             // OK
         }
 
         // under-estimated compressed length
         try {
-            final int decompressedLen = tester.decompress(decompressor2, compressed, 0, compressedLen - 1, tester.allocate(len + 100), 0, len + 100);
-            fail("decompressedLen=" + decompressedLen);
+            final int decompressedLen = tester.decompress(decompressor2, compressed, 0, compressedLen - 1, tester.allocate(context, len + 100), 0, len + 100);
+            Assertions.fail("decompressedLen=" + decompressedLen);
         } catch (LZ4Exception e) {
             // OK
         }
     }
 
-    public <T> void testRoundTrip(SrcDestTester<T> tester,
+    public <T> void testRoundTrip(RandomContext context, SrcDestTester<T> tester,
                                   byte[] data,
                                   LZ4Compressor compressor,
                                   LZ4FastDecompressor decompressor,
                                   LZ4SafeDecompressor decompressor2) {
-        final T original = tester.copyOf(data);
+        final T original = tester.copyOf(context, data);
         final int maxCompressedLength = tester.maxCompressedLength(data.length);
-        final T compressed = tester.allocate(maxCompressedLength);
+        final T compressed = tester.allocate(context, maxCompressedLength);
         final int compressedLen = tester.compress(compressor,
                 original,
                 compressed);
@@ -231,77 +241,67 @@ public class LZ4Test extends AbstractLZ4Test {
         }
 
         // test decompression
-        final T restored = tester.allocate(data.length);
+        final T restored = tester.allocate(context, data.length);
         assertEquals(compressedLen, tester.decompress(decompressor, compressed, restored));
         if (original instanceof ByteBuffer) {
             assertEquals(compressedLen, ((ByteBuffer) compressed).position());
             assertEquals(data.length, ((ByteBuffer) restored).position());
         }
-        assertArrayEquals(data, tester.copyOf(restored, 0, data.length));
+        Assertions.assertArrayEquals(data, tester.copyOf(restored, 0, data.length));
         if (original instanceof ByteBuffer) {
             ((ByteBuffer) compressed).rewind();
             ((ByteBuffer) restored).rewind();
         }
 
         // try decompression when only the size of the compressed buffer is known
-        tester.fill(restored, randomByte());
+        tester.fill(restored, context.nextByte());
         // Truncate the compressed buffer to the exact size
-        final T compressedExactSize = tester.copyOf(tester.copyOf(compressed, 0, compressedLen));
+        final T compressedExactSize = tester.copyOf(context, tester.copyOf(compressed, 0, compressedLen));
         assertEquals(data.length, tester.decompress(decompressor2, compressedExactSize, restored));
         if (original instanceof ByteBuffer) {
             assertEquals(compressedLen, ((ByteBuffer) compressedExactSize).position());
             assertEquals(data.length, ((ByteBuffer) restored).position());
         }
-        assertArrayEquals(data, tester.copyOf(restored, 0, data.length));
+        Assertions.assertArrayEquals(data, tester.copyOf(restored, 0, data.length));
         if (original instanceof ByteBuffer) {
             ((ByteBuffer) compressedExactSize).rewind();
             ((ByteBuffer) restored).rewind();
         }
     }
 
-    public void testRoundTrip(byte[] data, int off, int len, LZ4Factory compressorFactory, LZ4Factory decompressorFactory) {
+    public void testRoundTrip(RandomContext context, byte[] data, int off, int len, LZ4Factory compressorFactory, LZ4Factory decompressorFactory) {
         for (LZ4Compressor compressor : Arrays.asList(
                 compressorFactory.fastCompressor(), compressorFactory.highCompressor())) {
-            testRoundTrip(data, off, len, compressor, decompressorFactory.fastDecompressor(), decompressorFactory.safeDecompressor());
+            testRoundTrip(context, data, off, len, compressor, decompressorFactory.fastDecompressor(), decompressorFactory.safeDecompressor());
         }
     }
 
-    public void testRoundTrip(byte[] data, int off, int len) {
-        for (LZ4Factory compressorFactory : Arrays.asList(
-                LZ4Factory.nativeInsecureInstance(),
-                LZ4Factory.unsafeInsecureInstance(),
-                LZ4Factory.safeInstance())) {
-            for (LZ4Factory decompressorFactory : Arrays.asList(
-                    LZ4Factory.nativeInsecureInstance(),
-                    LZ4Factory.unsafeInsecureInstance(),
-                    LZ4Factory.safeInstance())) {
-                testRoundTrip(data, off, len, compressorFactory, decompressorFactory);
-            }
-        }
+    public void testRoundTrip(RandomContext context, byte[] data, int off, int len) {
+        testRoundTrip(context, data, off, len, LZ4Factory.safeInstance(), LZ4Factory.safeInstance());
     }
 
-    public void testRoundTrip(byte[] data) {
-        testRoundTrip(data, 0, data.length);
+    public void testRoundTrip(RandomContext context, byte[] data) {
+        testRoundTrip(context, data, 0, data.length);
     }
 
-    public void testRoundTrip(String resource) throws IOException {
+    public void testRoundTrip(RandomContext context, String resource) throws IOException {
         final byte[] data = readResource(resource);
-        testRoundTrip(data);
+        testRoundTrip(context, data);
     }
 
     @Test
     public void testRoundtripGeo() throws IOException {
-        testRoundTrip("/calgary/geo");
+        testRoundTrip(new RandomContext(0L), "/calgary/geo");
     }
 
     @Test
     public void testRoundtripBook1() throws IOException {
-        testRoundTrip("/calgary/book1");
+        testRoundTrip(new RandomContext(0L), "/calgary/book1");
     }
 
     @Test
     public void testRoundtripPic() throws IOException {
-        testRoundTrip("/calgary/pic");
+        testRoundTrip(new RandomContext(0L), "/calgary/pic");
     }
 
     @Test
@@ -327,7 +327,7 @@ public class LZ4Test extends AbstractLZ4Test {
             try {
                 // it is invalid to end with a match, should be at least 5 literals
                 decompressor.decompress(invalid, 0, new byte[decompressedLength], 0, decompressedLength);
-                assertTrue(decompressor.toString(), false);
+                Assertions.assertTrue(false, decompressor.toString());
             } catch (LZ4Exception e) {
                 // OK
             }
@@ -337,7 +337,7 @@ public class LZ4Test extends AbstractLZ4Test {
             try {
                 // it is invalid to end with a match, should be at least 5 literals
                 decompressor.decompress(invalid, 0, invalid.length, new byte[20], 0);
-                assertTrue(false);
+                Assertions.assertTrue(false);
             } catch (LZ4Exception e) {
                 // OK
             }
@@ -357,7 +357,7 @@ public class LZ4Test extends AbstractLZ4Test {
                 try {
                     // it is invalid to end with a match, should be at least 5 literals
                     decompressor.decompress(invalid, 0, new byte[20], 0, 20);
-                    assertTrue(decompressor.toString(), false);
+                    Assertions.assertTrue(false, decompressor.toString());
                 } catch (LZ4Exception e) {
                     // OK
                 }
@@ -367,7 +367,7 @@ public class LZ4Test extends AbstractLZ4Test {
                 try {
                     // it is invalid to end with a match, should be at least 5 literals
                     decompressor.decompress(invalid, 0, invalid.length, new byte[20], 0);
-                    assertTrue(false);
+                    Assertions.assertTrue(false);
                 } catch (LZ4Exception e) {
                     // OK
                 }
@@ -377,73 +377,81 @@ public class LZ4Test extends AbstractLZ4Test {
 
     @Test
     public void testWriteToReadOnlyBuffer() {
+        var context = new RandomContext(0L);
         for (LZ4Compressor compressor : COMPRESSORS) {
-            ByteBuffer in = Tester.BYTE_BUFFER.copyOf(new byte[]{2, 3});
-            ByteBuffer out = Tester.BYTE_BUFFER.allocate(100).asReadOnlyBuffer();
+            ByteBuffer in = Tester.BYTE_BUFFER.copyOf(context, new byte[]{2, 3});
+            ByteBuffer out = Tester.BYTE_BUFFER.allocate(context, 100).asReadOnlyBuffer();
             try {
                 compressor.compress(in, out);
-                fail();
+                Assertions.fail();
             } catch (ReadOnlyBufferException e) {
                 // ok
             }
         }
         for (LZ4SafeDecompressor decompressor : SAFE_DECOMPRESSORS) {
-            ByteBuffer in = Tester.BYTE_BUFFER.copyOf(COMPRESSORS[0].compress(new byte[]{2, 3}));
-            ByteBuffer out = Tester.BYTE_BUFFER.allocate(100).asReadOnlyBuffer();
+            ByteBuffer in = Tester.BYTE_BUFFER.copyOf(context, COMPRESSORS[0].compress(new byte[]{2, 3}));
+            ByteBuffer out = Tester.BYTE_BUFFER.allocate(context, 100).asReadOnlyBuffer();
             try {
                 decompressor.decompress(in, out);
-                fail();
+                Assertions.fail();
             } catch (ReadOnlyBufferException e) {
                 // ok
             }
         }
         for (LZ4FastDecompressor decompressor : FAST_DECOMPRESSORS) {
-            ByteBuffer in = Tester.BYTE_BUFFER.copyOf(COMPRESSORS[0].compress(new byte[]{2, 3}));
-            ByteBuffer out = Tester.BYTE_BUFFER.allocate(100).asReadOnlyBuffer();
+            ByteBuffer in = Tester.BYTE_BUFFER.copyOf(context, COMPRESSORS[0].compress(new byte[]{2, 3}));
+            ByteBuffer out = Tester.BYTE_BUFFER.allocate(context, 100).asReadOnlyBuffer();
             out.limit(2);
             try {
                 decompressor.decompress(in, out);
-                fail();
+                Assertions.fail();
             } catch (ReadOnlyBufferException e) {
                 // ok
             }
         }
     }
 
-    @Test
-    @Repeat(iterations = 5)
-    public void testAllEqual() {
-        final int len = randomBoolean() ? randomInt(20) : randomInt(100000);
+    @ParameterizedTest
+    @ValueSource(longs = {0L, 1L, 2L, 3L, 4L})
+    public void testAllEqual(long randomSeed) {
+        var context = new RandomContext(randomSeed);
+
+        final int len = context.nextBoolean() ? context.nextInt(20) : context.nextInt(100000);
         final byte[] buf = new byte[len];
-        Arrays.fill(buf, randomByte());
-        testRoundTrip(buf);
+        Arrays.fill(buf, context.nextByte());
+        testRoundTrip(context, buf);
     }
 
     @Test
     public void testMaxDistance() {
-        final int len = randomIntBetween(1 << 17, 1 << 18);
-        final int off = randomInt(len - (1 << 16) - (1 << 15));
+        var context = new RandomContext(0L);
+
+        final int len = context.nextInt(1 << 17, 1 << 18);
+        final int off = context.nextInt(len - (1 << 16) - (1 << 15));
         final byte[] buf = new byte[len];
         for (int i = 0; i < (1 << 15); ++i) {
-            buf[off + i] = randomByte();
+            buf[off + i] = context.nextByte();
         }
         System.arraycopy(buf, off, buf, off + 65535, 1 << 15);
-        testRoundTrip(buf);
+        testRoundTrip(context, buf);
     }
 
-    @Test
-    @Repeat(iterations = 10)
-    public void testRandomData() {
-        final int n = randomIntBetween(1, 15);
-        final int off = randomInt(1000);
-        final int len = randomBoolean() ? randomInt(1 << 16) : randomInt(1 << 20);
-        final byte[] data = randomArray(off + len + randomInt(100), n);
-        testRoundTrip(data, off, len);
+    @ParameterizedTest
+    @ValueSource(longs = {0L, 1L, 2L, 3L, 4L, 6L, 7L, 8L, 9L})
+    public void testRandomData(long randomSeed) {
+        var context = new RandomContext(randomSeed);
+
+        final int n = context.nextInt(1, 16);
+        final int off = context.nextInt(1000);
+        final int len = context.nextBoolean() ? context.nextInt(1 << 16) : context.nextInt(1 << 20);
+        final byte[] data = context.nextBytes(off + len + context.nextInt(100), n);
+        testRoundTrip(context, data, off, len);
     }
 
     @Test
     // https://github.com/jpountz/lz4-java/issues/12
     public void testRoundtripIssue12() {
+        var context = new RandomContext(0L);
         byte[] data = new byte[]{
                 14, 72, 14, 85, 3, 72, 14, 85, 3, 72, 14, 72, 14, 72, 14, 85, 3, 72, 14, 72, 14, 72, 14, 72, 14, 72, 14, 72, 14, 85, 3, 72,
                 14, 85, 3, 72, 14, 85, 3, 72, 14, 85, 3, 72, 14, 85, 3, 72, 14, 85, 3, 72, 14, 50, 64, 0, 46, -1, 0, 0, 0, 29, 3, 85,
@@ -494,91 +502,7 @@ public class LZ4Test extends AbstractLZ4Test {
                 5, 72, 13, 85, 5, 72, 13, 72, 13, 72, 13, 72, 13, 85, 5, 72, 13, 85, 5, 72, 13, 85, 5, 72, 13, 72, 13, 85, 5, 72, 13, 72,
                 13, 85, 5, 72, 13, 72, 13, 85, 5, 72, 13, -19, -24, -101, -35
         };
-        testRoundTrip(data, 9, data.length - 9);
-    }
-
-    private static void assertCompressedArrayEquals(String message, byte[] expected, byte[] actual) {
-        int off = 0;
-        int decompressedOff = 0;
-        while (true) {
-            if (off == expected.length) {
-                break;
-            }
-            final Sequence sequence1 = readSequence(expected, off);
-            final Sequence sequence2 = readSequence(actual, off);
-            assertEquals(message + ", off=" + off + ", decompressedOff=" + decompressedOff, sequence1, sequence2);
-            off += sequence1.length;
-            decompressedOff += sequence1.literalLen + sequence1.matchLen;
-        }
-    }
-
-    private static Sequence readSequence(byte[] buf, int off) {
-        final int start = off;
-        final int token = buf[off++] & 0xFF;
-        int literalLen = token >>> 4;
-        if (literalLen >= 0x0F) {
-            int len;
-            while ((len = buf[off++] & 0xFF) == 0xFF) {
-                literalLen += 0xFF;
-            }
-            literalLen += len;
-        }
-        off += literalLen;
-        if (off == buf.length) {
-            return new Sequence(literalLen, -1, -1, off - start);
-        }
-        int matchDec = (buf[off++] & 0xFF) | ((buf[off++] & 0xFF) << 8);
-        int matchLen = token & 0x0F;
-        if (matchLen >= 0x0F) {
-            int len;
-            while ((len = buf[off++] & 0xFF) == 0xFF) {
-                matchLen += 0xFF;
-            }
-            matchLen += len;
-        }
-        matchLen += 4;
-        return new Sequence(literalLen, matchDec, matchLen, off - start);
-    }
-
-    private static class Sequence {
-        final int literalLen, matchDec, matchLen, length;
-
-        public Sequence(int literalLen, int matchDec, int matchLen, int length) {
-            this.literalLen = literalLen;
-            this.matchDec = matchDec;
-            this.matchLen = matchLen;
-            this.length = length;
-        }
-
-        @Override
-        public String toString() {
-            return "Sequence [literalLen=" + literalLen + ", matchDec=" + matchDec
-                    + ", matchLen=" + matchLen + "]";
-        }
-
-        @Override
-        public int hashCode() {
-            return 42;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj)
-                return true;
-            if (obj == null)
-                return false;
-            if (getClass() != obj.getClass())
-                return false;
-            Sequence other = (Sequence) obj;
-            if (literalLen != other.literalLen)
-                return false;
-            if (matchDec != other.matchDec)
-                return false;
-            if (matchLen != other.matchLen)
-                return false;
-            return true;
-        }
-
+        testRoundTrip(context, data, 9, data.length - 9);
     }
 
 }
