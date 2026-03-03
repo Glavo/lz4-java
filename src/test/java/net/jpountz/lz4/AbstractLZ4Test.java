@@ -39,7 +39,7 @@ public abstract class AbstractLZ4Test extends RandomizedTest {
 
         void fill(T instance, byte b);
 
-        public static class ByteArrayTesterBase implements TesterBase<byte[]> {
+        class ByteArrayTesterBase implements TesterBase<byte[]> {
 
             @Override
             public byte[] allocate(int length) {
@@ -67,7 +67,7 @@ public abstract class AbstractLZ4Test extends RandomizedTest {
             }
         }
 
-        public static class ByteBufferTesterBase implements TesterBase<ByteBuffer> {
+        class ByteBufferTesterBase implements TesterBase<ByteBuffer> {
 
             @Override
             public ByteBuffer allocate(int length) {
@@ -128,7 +128,7 @@ public abstract class AbstractLZ4Test extends RandomizedTest {
 
         int decompress(LZ4SafeDecompressor decompressor, T src, int srcOff, int srcLen, T dest, int destOff, int maxDestLen);
 
-        public static class ByteArrayTester extends ByteArrayTesterBase implements Tester<byte[]> {
+        class ByteArrayTester extends ByteArrayTesterBase implements Tester<byte[]> {
 
             @Override
             public int compress(LZ4Compressor compressor, byte[] src, int srcOff,
@@ -149,8 +149,8 @@ public abstract class AbstractLZ4Test extends RandomizedTest {
             }
         }
 
-        public static final Tester<byte[]> BYTE_ARRAY = new ByteArrayTester();
-        public static final Tester<byte[]> BYTE_ARRAY_WITH_LENGTH = new ByteArrayTester() {
+        Tester<byte[]> BYTE_ARRAY = new ByteArrayTester();
+        Tester<byte[]> BYTE_ARRAY_WITH_LENGTH = new ByteArrayTester() {
             @Override
             public int compress(LZ4Compressor compressor, byte[] src, int srcOff,
                                 int srcLen, byte[] dest, int destOff, int maxDestLen) {
@@ -170,7 +170,7 @@ public abstract class AbstractLZ4Test extends RandomizedTest {
             }
         };
 
-        public static class ByteBufferTester extends ByteBufferTesterBase implements Tester<ByteBuffer> {
+        class ByteBufferTester extends ByteBufferTesterBase implements Tester<ByteBuffer> {
 
             @Override
             public int compress(LZ4Compressor compressor, ByteBuffer src, int srcOff,
@@ -191,8 +191,8 @@ public abstract class AbstractLZ4Test extends RandomizedTest {
             }
         }
 
-        public static final Tester<ByteBuffer> BYTE_BUFFER = new ByteBufferTester();
-        public static final Tester<ByteBuffer> BYTE_BUFFER_WITH_LENGTH = new ByteBufferTester() {
+        Tester<ByteBuffer> BYTE_BUFFER = new ByteBufferTester();
+        Tester<ByteBuffer> BYTE_BUFFER_WITH_LENGTH = new ByteBufferTester() {
             @Override
             public int compress(LZ4Compressor compressor, ByteBuffer src, int srcOff,
                                 int srcLen, ByteBuffer dest, int destOff, int maxDestLen) {
@@ -222,7 +222,7 @@ public abstract class AbstractLZ4Test extends RandomizedTest {
 
         int decompress(LZ4SafeDecompressor decompressor, T src, T dest);
 
-        public static class ByteArrayTester extends ByteArrayTesterBase implements SrcDestTester<byte[]> {
+        class ByteArrayTester extends ByteArrayTesterBase implements SrcDestTester<byte[]> {
 
             @Override
             public int compress(LZ4Compressor compressor, byte[] src, byte[] dest) {
@@ -240,8 +240,8 @@ public abstract class AbstractLZ4Test extends RandomizedTest {
             }
         }
 
-        public static final SrcDestTester<byte[]> BYTE_ARRAY = new ByteArrayTester();
-        public static final SrcDestTester<byte[]> BYTE_ARRAY_WITH_LENGTH = new ByteArrayTester() {
+        SrcDestTester<byte[]> BYTE_ARRAY = new ByteArrayTester();
+        SrcDestTester<byte[]> BYTE_ARRAY_WITH_LENGTH = new ByteArrayTester() {
             @Override
             public int compress(LZ4Compressor compressor, byte[] src, byte[] dest) {
                 return new LZ4CompressorWithLength(compressor).compress(src, dest);
@@ -258,7 +258,7 @@ public abstract class AbstractLZ4Test extends RandomizedTest {
             }
         };
 
-        public static class ByteBufferTester extends ByteBufferTesterBase implements SrcDestTester<ByteBuffer> {
+        class ByteBufferTester extends ByteBufferTesterBase implements SrcDestTester<ByteBuffer> {
 
             @Override
             public int compress(LZ4Compressor compressor, ByteBuffer src, ByteBuffer dest) {
@@ -282,8 +282,8 @@ public abstract class AbstractLZ4Test extends RandomizedTest {
             }
         }
 
-        public static final SrcDestTester<ByteBuffer> BYTE_BUFFER = new ByteBufferTester();
-        public static final SrcDestTester<ByteBuffer> BYTE_BUFFER_WITH_LENGTH = new ByteBufferTester() {
+        SrcDestTester<ByteBuffer> BYTE_BUFFER = new ByteBufferTester();
+        SrcDestTester<ByteBuffer> BYTE_BUFFER_WITH_LENGTH = new ByteBufferTester() {
             @Override
             public int compress(LZ4Compressor compressor, ByteBuffer src, ByteBuffer dest) {
                 final int pos = dest.position();
