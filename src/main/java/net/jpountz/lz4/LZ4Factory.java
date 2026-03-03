@@ -16,13 +16,7 @@ package net.jpountz.lz4;
  * limitations under the License.
  */
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
-
-import net.jpountz.util.Native;
-import net.jpountz.util.Utils;
 
 import static net.jpountz.lz4.LZ4Constants.DEFAULT_COMPRESSION_LEVEL;
 import static net.jpountz.lz4.LZ4Constants.MAX_COMPRESSION_LEVEL;
@@ -43,15 +37,7 @@ import static net.jpountz.lz4.LZ4Constants.MAX_COMPRESSION_LEVEL;
 /// a [LZ4Factory] instance in a static field.
 public final class LZ4Factory {
 
-    private static LZ4Factory instance(String impl, boolean insecureFastDecompressor) {
-        try {
-            return new LZ4Factory(impl, insecureFastDecompressor);
-        } catch (Exception e) {
-            throw new AssertionError(e);
-        }
-    }
-
-    private static final LZ4Factory INSTANCE = instance("JavaSafe", false);
+    private static final LZ4Factory INSTANCE = new LZ4Factory("JavaSafe");
 
     /**
      * Returns a {@link LZ4Factory} instance that returns compressors and
@@ -81,7 +67,7 @@ public final class LZ4Factory {
      * @return a {@link LZ4Factory} instance that returns compressors and
      * decompressors that are native bindings to the original C library
      */
-    public static synchronized LZ4Factory nativeInstance() {
+    public static LZ4Factory nativeInstance() {
         return INSTANCE;
     }
 
@@ -97,7 +83,7 @@ public final class LZ4Factory {
      * @deprecated Never decompress untrusted inputs with this instance. Prefer {@link #nativeInstance()}.
      */
     @Deprecated
-    public static synchronized LZ4Factory nativeInsecureInstance() {
+    public static LZ4Factory nativeInsecureInstance() {
         return INSTANCE;
     }
 
@@ -108,7 +94,7 @@ public final class LZ4Factory {
      * @return a {@link LZ4Factory} instance that returns compressors and
      * decompressors that are written with Java's official API.
      */
-    public static synchronized LZ4Factory safeInstance() {
+    public static LZ4Factory safeInstance() {
         return INSTANCE;
     }
 
@@ -125,7 +111,7 @@ public final class LZ4Factory {
      * may return to Unsafe.
      */
     @Deprecated
-    public static synchronized LZ4Factory unsafeInstance() {
+    public static LZ4Factory unsafeInstance() {
         return INSTANCE;
     }
 
@@ -140,7 +126,7 @@ public final class LZ4Factory {
      * @deprecated Never decompress untrusted inputs with this instance. Prefer {@link #unsafeInstance()}.
      */
     @Deprecated
-    public static synchronized LZ4Factory unsafeInsecureInstance() {
+    public static LZ4Factory unsafeInsecureInstance() {
         return INSTANCE;
     }
 
@@ -155,15 +141,7 @@ public final class LZ4Factory {
      * rely on JNI bindings.
      */
     public static LZ4Factory fastestJavaInstance() {
-        if (Utils.isUnalignedAccessAllowed()) {
-            try {
-                return unsafeInstance();
-            } catch (Throwable t) {
-                return safeInstance();
-            }
-        } else {
-            return safeInstance();
-        }
+        return INSTANCE;
     }
 
     /**
@@ -179,25 +157,7 @@ public final class LZ4Factory {
      * @return the fastest available {@link LZ4Factory} instance
      */
     public static LZ4Factory fastestInstance() {
-        if (Native.isLoaded()
-                || Native.class.getClassLoader() == ClassLoader.getSystemClassLoader()) {
-            try {
-                return nativeInstance();
-            } catch (Throwable t) {
-                return fastestJavaInstance();
-            }
-        } else {
-            return fastestJavaInstance();
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    private static <T> T classInstance(String cls) throws NoSuchFieldException, SecurityException, ClassNotFoundException, IllegalArgumentException, IllegalAccessException {
-        ClassLoader loader = LZ4Factory.class.getClassLoader();
-        loader = loader == null ? ClassLoader.getSystemClassLoader() : loader;
-        final Class<?> c = loader.loadClass(cls);
-        Field f = c.getField("INSTANCE");
-        return (T) f.get(null);
+        return INSTANCE;
     }
 
     private final String impl;
@@ -207,21 +167,16 @@ public final class LZ4Factory {
     private final LZ4SafeDecompressor safeDecompressor;
     private final LZ4Compressor[] highCompressors = new LZ4Compressor[MAX_COMPRESSION_LEVEL + 1];
 
-    private LZ4Factory(String impl, boolean insecureFastDecompressor) throws ClassNotFoundException, NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException, NoSuchMethodException, InstantiationException, InvocationTargetException {
+    private LZ4Factory(String impl) {
         this.impl = impl;
-        fastCompressor = classInstance("net.jpountz.lz4.LZ4" + impl + "Compressor");
-        highCompressor = classInstance("net.jpountz.lz4.LZ4HC" + impl + "Compressor");
-        if (insecureFastDecompressor) {
-            fastDecompressor = classInstance("net.jpountz.lz4.LZ4" + impl + "FastDecompressor");
-        } else {
-            fastDecompressor = LZ4JavaSafeFastDecompressor.INSTANCE;
-        }
-        safeDecompressor = classInstance("net.jpountz.lz4.LZ4" + impl + "SafeDecompressor");
-        Constructor<? extends LZ4Compressor> highConstructor = highCompressor.getClass().getDeclaredConstructor(int.class);
-        highCompressors[DEFAULT_COMPRESSION_LEVEL] = highCompressor;
+        this.fastCompressor = new LZ4JavaSafeCompressor();
+        this.highCompressor = new LZ4HCJavaSafeCompressor();
+        this.fastDecompressor = LZ4JavaSafeFastDecompressor.INSTANCE;
+        this.safeDecompressor = new LZ4JavaSafeSafeDecompressor();
+        this.highCompressors[DEFAULT_COMPRESSION_LEVEL] = highCompressor;
         for (int level = 1; level <= MAX_COMPRESSION_LEVEL; level++) {
             if (level == DEFAULT_COMPRESSION_LEVEL) continue;
-            highCompressors[level] = highConstructor.newInstance(level);
+            highCompressors[level] = new LZ4HCJavaSafeCompressor(level);
         }
 
         // quickly test that everything works as expected
