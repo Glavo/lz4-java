@@ -20,8 +20,8 @@ dependencies {
     testImplementation("com.code-intelligence:jazzer-junit:0.26.0")
 }
 
-tasks.compileJava {
-    options.release.set(8)
+tasks.withType<JavaCompile> {
+    options.release.set(11)
 }
 
 tasks.test {
