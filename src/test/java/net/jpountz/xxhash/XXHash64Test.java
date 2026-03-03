@@ -138,8 +138,6 @@ public class XXHash64Test extends AbstractLZ4Test {
 
     @Test
     public void test4GB() {
-        Assumptions.assumeTrue(XXHCLI.IS_AVAILABLE);
-
         byte[] bytes = new byte[randomIntBetween(1 << 22, 1 << 26)];
         for (int i = 0; i < bytes.length; ++i) {
             bytes[i] = randomByte();

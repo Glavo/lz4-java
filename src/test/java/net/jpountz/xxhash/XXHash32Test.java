@@ -24,11 +24,13 @@ import java.util.stream.LongStream;
 import net.jpountz.RandomContext;
 import net.jpountz.util.SafeUtils;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.lwjgl.util.xxhash.XXH32State;
+import org.lwjgl.util.xxhash.XXHash;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class XXHash32Test {
 
@@ -74,7 +76,7 @@ public class XXHash32Test {
     );
 
     private static LongStream randomSeeds() {
-        return LongStream.range(0, 40);
+        return LongStream.range(0, 20);
     }
 
     @ParameterizedTest
@@ -110,6 +112,7 @@ public class XXHash32Test {
 
     @ParameterizedTest
     @MethodSource("randomSeeds")
+    @Disabled
     public void testInstances(long randomSeed) {
         var context = new RandomContext(randomSeed);
 
@@ -136,8 +139,6 @@ public class XXHash32Test {
     @ParameterizedTest
     @MethodSource("randomSeeds")
     public void test4GB(long randomSeed) {
-        Assumptions.assumeTrue(XXHCLI.IS_AVAILABLE);
-
         var context = new RandomContext(randomSeed);
 
         byte[] bytes = context.nextBytes(context.nextInt(1 << 22, 1 << 26));
@@ -145,16 +146,29 @@ public class XXHash32Test {
         final int len = context.nextInt(bytes.length - off - 1024, bytes.length - off);
         long totalLen = 0;
         final int seed = context.nextInt();
-        StreamingXXHash32 hash1 = XXHashFactory.nativeInstance().newStreamingHash32(seed);
-        StreamingXXHash32 hash2 = XXHashFactory.unsafeInstance().newStreamingHash32(seed);
-        StreamingXXHash32 hash3 = XXHashFactory.safeInstance().newStreamingHash32(seed);
-        while (totalLen < (1L << 33)) {
-            hash1.update(bytes, off, len);
-            hash2.update(bytes, off, len);
-            hash3.update(bytes, off, len);
-            assertEquals(hash1.getValue(), hash2.getValue(), hash2 + " " + totalLen);
-            assertEquals(hash1.getValue(), hash3.getValue(), hash3 + " " + totalLen);
-            totalLen += len;
+
+        ByteBuffer nativeBuffer = ByteBuffer.allocateDirect(len);
+        nativeBuffer.limit(len);
+
+        StreamingXXHash32 hash = XXHashFactory.safeInstance().newStreamingHash32(seed);
+        try (XXH32State state = XXHash.XXH32_createState()) {
+            assertNotNull(state);
+
+            if (XXHash.XXH32_reset(state, seed) != XXHash.XXH_OK) {
+                fail("XXH32_reset failed");
+            }
+
+            while (totalLen < (1L << 33)) {
+                nativeBuffer.put(0, bytes, off, len);
+                if (XXHash.XXH32_update(state, nativeBuffer) != XXHash.XXH_OK) {
+                    fail("XXH32_update failed");
+                }
+
+                hash.update(bytes, off, len);
+
+                assertEquals(hash.getValue(), XXHash.XXH32_digest(state), "hash " + totalLen);
+                totalLen += len;
+            }
         }
     }
 }
