@@ -4,8 +4,9 @@ import java.lang.management.ManagementFactory
 import kotlin.math.max
 
 plugins {
-    id("java")
+    id("java-library")
     id("jacoco")
+    id("maven-publish")
 }
 
 group = "org.glavo"
@@ -34,6 +35,11 @@ dependencies {
         testImplementation("org.lwjgl:lwjgl-lz4:${lwjglVersion}:natives-${LWJGL.PLAFROM}")
         testImplementation("org.lwjgl:lwjgl-xxhash:${lwjglVersion}:natives-${LWJGL.PLAFROM}")
     }
+}
+
+java {
+    withSourcesJar()
+    withJavadocJar()
 }
 
 tasks.withType<JavaCompile> {
@@ -68,5 +74,42 @@ tasks.jacocoTestReport {
         xml.required.set(true)
         csv.required.set(true)
         html.required.set(true)
+    }
+}
+
+tasks.withType<GenerateModuleMetadata> {
+    enabled = false
+}
+
+publishing.publications.create<MavenPublication>("maven") {
+    groupId = project.group.toString()
+    version = project.version.toString()
+    artifactId = project.name
+
+    from(components["java"])
+
+    pom {
+        name.set(project.name)
+        description.set(project.description)
+        url.set("https://github.com/Glavo/lz4-java")
+
+        licenses {
+            license {
+                name.set("Apache-2.0")
+                url.set("https://www.apache.org/licenses/LICENSE-2.0")
+            }
+        }
+
+        developers {
+            developer {
+                id.set("Glavo")
+                name.set("Glavo")
+                email.set("zjx001202@gmail.com")
+            }
+        }
+
+        scm {
+            url.set("https://github.com/Glavo/lz4-java")
+        }
     }
 }
