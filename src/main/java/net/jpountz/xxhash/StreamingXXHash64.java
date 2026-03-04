@@ -24,18 +24,18 @@ import java.io.Closeable;
 ///
 /// This API is compatible with the [block API][XXHash64] and the following
 /// code samples are equivalent:
-/// <pre class="prettyprint">
+/// ```java
 ///   long hash(XXHashFactory xxhashFactory, byte[] buf, int off, int len, long seed) {
 ///     return xxhashFactory.hash64().hash(buf, off, len, seed);
 ///   }
-/// </pre>
-/// <pre class="prettyprint">
+/// ```
+/// ```java
 ///   long hash(XXHashFactory xxhashFactory, byte[] buf, int off, int len, long seed) {
 ///     StreamingXXHash64 sh64 = xxhashFactory.newStreamingHash64(seed);
 ///     sh64.update(buf, off, len);
 ///     return sh64.getValue();
 ///   }
-/// </pre>
+/// ```
 ///
 /// Instances of this class are **not** thread-safe.
 public abstract class StreamingXXHash64 implements Closeable {
@@ -51,7 +51,7 @@ public abstract class StreamingXXHash64 implements Closeable {
     /// @return the checksum
     public abstract long getValue();
 
-    /// Updates the value of the hash with buf[off:off+len].
+    /// Updates the value of the hash with `buf[off:off+len]`.
     ///
     /// @param buf the input data
     /// @param off the start offset in buf
