@@ -52,15 +52,26 @@ tasks.javadoc {
     }
 }
 
+val testFlipByteOrder by tasks.registering(Test::class) {
+    group = "verification"
+
+    val testSourceSet = sourceSets.test.get()
+    testClassesDirs = testSourceSet.output.classesDirs
+    classpath = testSourceSet.runtimeClasspath
+
+    systemProperty("net.jpountz.lz4.test.flipByteOrder", true)
+}
+
+tasks.check {
+    dependsOn(testFlipByteOrder)
+}
+
 val testTempDir = layout.buildDirectory.dir("test-tmp")
 
-tasks.test {
+tasks.withType<Test> {
     useJUnitPlatform()
 
     systemProperty("net.jpountz.lz4.test.tempDir", testTempDir.get().asFile.absolutePath)
-    if (project.findProperty("net.jpountz.lz4.test.flipByteOrder")?.toString().equals("true", true)) {
-        systemProperty("net.jpountz.lz4.test.flipByteOrder", true)
-    }
 
     if (project.findProperty("net.jpountz.lz4.test.fuzz")?.toString().equals("true", true)) {
         environment("JAZZER_FUZZ", "1")
@@ -73,7 +84,7 @@ tasks.test {
 }
 
 tasks.jacocoTestReport {
-    dependsOn(tasks.test)
+    dependsOn(tasks.check)
     reports {
         xml.required.set(true)
         csv.required.set(true)
