@@ -18,7 +18,6 @@ package net.jpountz.util;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.ReadOnlyBufferException;
 
 /// **FOR INTERNAL USE ONLY**
 public enum ByteBufferUtils {
@@ -39,7 +38,7 @@ public enum ByteBufferUtils {
     }
 
     public static ByteBuffer inLittleEndianOrder(ByteBuffer buf) {
-        if (buf.order().equals(ByteOrder.LITTLE_ENDIAN)) {
+        if (buf.order() == ByteOrder.LITTLE_ENDIAN) {
             return buf;
         } else {
             return buf.duplicate().order(ByteOrder.LITTLE_ENDIAN);
@@ -47,7 +46,7 @@ public enum ByteBufferUtils {
     }
 
     public static ByteBuffer inNativeByteOrder(ByteBuffer buf) {
-        if (buf.order().equals(Utils.NATIVE_BYTE_ORDER)) {
+        if (buf.order() == Utils.NATIVE_BYTE_ORDER) {
             return buf;
         } else {
             return buf.duplicate().order(Utils.NATIVE_BYTE_ORDER);
@@ -97,13 +96,11 @@ public enum ByteBufferUtils {
         dest.put(off + 1, (byte) (i >>> 8));
     }
 
-    public static void checkNotReadOnly(ByteBuffer buffer) {
-        if (buffer.isReadOnly()) {
-            throw new ReadOnlyBufferException();
-        }
-    }
-
     public static int readShortLE(ByteBuffer buf, int i) {
-        return (buf.get(i) & 0xFF) | ((buf.get(i + 1) & 0xFF) << 8);
+        short value = buf.getShort(i);
+        if (buf.order() == ByteOrder.BIG_ENDIAN){
+            value = Short.reverseBytes(value);
+        }
+        return Short.toUnsignedInt(value);
     }
 }
