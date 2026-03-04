@@ -39,6 +39,7 @@ import java.util.stream.Stream;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class LZ4FrameIOStreamTest {
@@ -278,7 +279,7 @@ public class LZ4FrameIOStreamTest {
             }
             // Extra one byte at the tail
             try (InputStream is = new LZ4FrameInputStream(new SequenceInputStream(Files.newInputStream(lz4File), new ByteArrayInputStream(new byte[1])))) {
-                Assertions.assertThrows(IOException.class, is::read);
+                assertThrows(IOException.class, is::read);
             }
         } finally {
             Files.deleteIfExists(lz4File);
@@ -376,7 +377,7 @@ public class LZ4FrameIOStreamTest {
                 }
             }
             try (LZ4FrameInputStream is = new LZ4FrameInputStream(Files.newInputStream(lz4File))) {
-                Assertions.assertThrows(UnsupportedOperationException.class, is::getExpectedContentSize);
+                assertThrows(UnsupportedOperationException.class, is::getExpectedContentSize);
                 assertFalse(is.isExpectedContentSizeDefined());
                 testData.validateStreamEquals(is);
                 testData.validateStreamEquals(is);
@@ -505,7 +506,7 @@ public class LZ4FrameIOStreamTest {
     public void testEmptyLZ4Input(int testSize) throws IOException {
         final var testData = new TestData(testSize);
         try (InputStream is = new LZ4FrameInputStream(new ByteArrayInputStream(new byte[0]))) {
-            Assertions.assertThrows(IOException.class, is::read);
+            assertThrows(IOException.class, is::read);
         }
     }
 
@@ -514,7 +515,7 @@ public class LZ4FrameIOStreamTest {
     public void testPrematureMagicNb(int testSize) throws IOException {
         final var testData = new TestData(testSize);
         try (InputStream is = new LZ4FrameInputStream(new ByteArrayInputStream(new byte[1]))) {
-            Assertions.assertThrows(IOException.class, is::read);
+            assertThrows(IOException.class, is::read);
         }
 
         final Path lz4File = createTempFile("lz4test", ".lz4");
@@ -525,7 +526,7 @@ public class LZ4FrameIOStreamTest {
             // Extra one byte at the tail
             try (InputStream is = new LZ4FrameInputStream(new SequenceInputStream(Files.newInputStream(lz4File), new ByteArrayInputStream(new byte[1])))) {
                 testData.validateStreamEquals(is);
-                Assertions.assertThrows(IOException.class, is::read);
+                assertThrows(IOException.class, is::read);
             }
         } finally {
             Files.deleteIfExists(lz4File);
