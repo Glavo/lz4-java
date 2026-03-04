@@ -18,47 +18,39 @@ import java.nio.ByteBuffer;
  * limitations under the License.
  */
 
-/**
- * A 64-bits hash.
- * <p>
- * Instances of this class are thread-safe.
- */
+/// A 64-bits hash.
+///
+/// Instances of this class are thread-safe.
 public abstract class XXHash64 {
 
-    /**
-     * Computes the 64-bits hash of <code>buf[off:off+len]</code> using seed
-     * <code>seed</code>.
-     *
-     * @param buf  the input data
-     * @param off  the start offset in buf
-     * @param len  the number of bytes to hash
-     * @param seed the seed to use
-     * @return the hash value
-     */
+    /// Computes the 64-bits hash of <code>buf[off:off+len]</code> using seed
+    /// <code>seed</code>.
+    ///
+    /// @param buf  the input data
+    /// @param off  the start offset in buf
+    /// @param len  the number of bytes to hash
+    /// @param seed the seed to use
+    /// @return the hash value
     public abstract long hash(byte[] buf, int off, int len, long seed);
 
-    /**
-     * Computes the hash of the given slice of the {@link ByteBuffer}.
-     * {@link ByteBuffer#position() position} and {@link ByteBuffer#limit() limit}
-     * are not modified.
-     *
-     * @param buf  the input data
-     * @param off  the start offset in buf
-     * @param len  the number of bytes to hash
-     * @param seed the seed to use
-     * @return the hash value
-     */
+    /// Computes the hash of the given slice of the [ByteBuffer].
+    /// [position][ByteBuffer#position()] and [limit][ByteBuffer#limit()]
+    /// are not modified.
+    ///
+    /// @param buf  the input data
+    /// @param off  the start offset in buf
+    /// @param len  the number of bytes to hash
+    /// @param seed the seed to use
+    /// @return the hash value
     public abstract long hash(ByteBuffer buf, int off, int len, long seed);
 
-    /**
-     * Computes the hash of the given {@link ByteBuffer}. The
-     * {@link ByteBuffer#position() position} is moved in order to reflect bytes
-     * which have been read.
-     *
-     * @param buf  the input data
-     * @param seed the seed to use
-     * @return the hash value
-     */
+    /// Computes the hash of the given [ByteBuffer]. The
+    /// [position][ByteBuffer#position()] is moved in order to reflect bytes
+    /// which have been read.
+    ///
+    /// @param buf  the input data
+    /// @param seed the seed to use
+    /// @return the hash value
     public final long hash(ByteBuffer buf, long seed) {
         final long hash = hash(buf, buf.position(), buf.remaining(), seed);
         buf.position(buf.limit());

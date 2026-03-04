@@ -7,9 +7,7 @@ import static net.jpountz.util.SafeUtils.*;
 import static net.jpountz.util.SafeUtils.checkRange;
 import static java.lang.Long.rotateLeft;
 
-/**
- * Streaming xxhash.
- */
+/// Streaming xxhash.
 final class StreamingXXHash64JavaSafe extends AbstractStreamingXXHash64Java {
 
     StreamingXXHash64JavaSafe(long seed) {

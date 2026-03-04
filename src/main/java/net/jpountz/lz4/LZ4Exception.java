@@ -16,9 +16,7 @@ package net.jpountz.lz4;
  * limitations under the License.
  */
 
-/**
- * LZ4 compression or decompression error.
- */
+/// LZ4 compression or decompression error.
 public class LZ4Exception extends RuntimeException {
 
     private static final long serialVersionUID = 1L;

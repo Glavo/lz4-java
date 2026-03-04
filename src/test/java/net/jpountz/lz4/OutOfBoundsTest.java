@@ -43,13 +43,11 @@ public class OutOfBoundsTest {
         return lz4Factories().map(LZ4Factory::safeDecompressor);
     }
 
-    /**
-     * Abstraction over {@link LZ4FastDecompressor} and {@link LZ4SafeDecompressor}.
-     *
-     * <p>Should only be used for decompression which is expected to fail, because for the non-failing case
-     * {@link LZ4FastDecompressor} and {@link LZ4SafeDecompressor} behave differently regarding whether the
-     * input or output should be fully consumed.
-     */
+    /// Abstraction over [LZ4FastDecompressor] and [LZ4SafeDecompressor].
+    ///
+    /// Should only be used for decompression which is expected to fail, because for the non-failing case
+    /// [LZ4FastDecompressor] and [LZ4SafeDecompressor] behave differently regarding whether the
+    /// input or output should be fully consumed.
     public interface FallibleDecompressor {
         void decompress(byte[] input, byte[] output) throws LZ4Exception;
 

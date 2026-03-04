@@ -25,16 +25,14 @@ import net.jpountz.util.SafeUtils;
 import net.jpountz.xxhash.StreamingXXHash32;
 import net.jpountz.xxhash.XXHashFactory;
 
-/**
- * Streaming LZ4 (not compatible with the LZ4 Frame format).
- * This class compresses data into fixed-size blocks of compressed data.
- * This class uses its own format and is not compatible with the LZ4 Frame format.
- * For interoperability with other LZ4 tools, use {@link LZ4FrameOutputStream},
- * which is compatible with the LZ4 Frame format. This class remains for backward compatibility.
- *
- * @see LZ4BlockInputStream
- * @see LZ4FrameOutputStream
- */
+/// Streaming LZ4 (not compatible with the LZ4 Frame format).
+/// This class compresses data into fixed-size blocks of compressed data.
+/// This class uses its own format and is not compatible with the LZ4 Frame format.
+/// For interoperability with other LZ4 tools, use [LZ4FrameOutputStream],
+/// which is compatible with the LZ4 Frame format. This class remains for backward compatibility.
+///
+/// @see LZ4BlockInputStream
+/// @see LZ4FrameOutputStream
 public class LZ4BlockOutputStream extends FilterOutputStream {
 
     static final byte[] MAGIC = new byte[]{'L', 'Z', '4', 'B', 'l', 'o', 'c', 'k'};
@@ -80,20 +78,18 @@ public class LZ4BlockOutputStream extends FilterOutputStream {
     private boolean finished;
     private int o;
 
-    /**
-     * Creates a new {@link OutputStream} with configurable block size. Large
-     * blocks require more memory at compression and decompression time but
-     * should improve the compression ratio.
-     *
-     * @param out        the {@link OutputStream} to feed
-     * @param blockSize  the maximum number of bytes to try to compress at once,
-     *                   must be &gt;= 64 and &lt;= 32 M
-     * @param compressor the {@link LZ4Compressor} instance to use to compress
-     *                   data
-     * @param checksum   the {@link Checksum} instance to use to check data for
-     *                   integrity.
-     * @param syncFlush  true if pending data should also be flushed on {@link #flush()}
-     */
+    /// Creates a new [OutputStream] with configurable block size. Large
+    /// blocks require more memory at compression and decompression time but
+    /// should improve the compression ratio.
+    ///
+    /// @param out        the [OutputStream] to feed
+    /// @param blockSize  the maximum number of bytes to try to compress at once,
+    ///                   must be &gt;= 64 and &lt;= 32 M
+    /// @param compressor the [LZ4Compressor] instance to use to compress
+    ///                   data
+    /// @param checksum   the [Checksum] instance to use to check data for
+    ///                   integrity.
+    /// @param syncFlush  true if pending data should also be flushed on [#flush()]
     public LZ4BlockOutputStream(OutputStream out, int blockSize, LZ4Compressor compressor, Checksum checksum, boolean syncFlush) {
         super(out);
         this.blockSize = blockSize;
@@ -109,42 +105,36 @@ public class LZ4BlockOutputStream extends FilterOutputStream {
         System.arraycopy(MAGIC, 0, compressedBuffer, 0, MAGIC_LENGTH);
     }
 
-    /**
-     * Creates a new instance which checks stream integrity using
-     * {@link StreamingXXHash32} and doesn't sync flush.
-     *
-     * @param out        the {@link OutputStream} to feed
-     * @param blockSize  the maximum number of bytes to try to compress at once,
-     *                   must be &gt;= 64 and &lt;= 32 M
-     * @param compressor the {@link LZ4Compressor} instance to use to compress
-     *                   data
-     * @see #LZ4BlockOutputStream(OutputStream, int, LZ4Compressor, Checksum, boolean)
-     * @see StreamingXXHash32#asChecksum()
-     */
+    /// Creates a new instance which checks stream integrity using
+    /// [StreamingXXHash32] and doesn't sync flush.
+    ///
+    /// @param out        the [OutputStream] to feed
+    /// @param blockSize  the maximum number of bytes to try to compress at once,
+    ///                   must be &gt;= 64 and &lt;= 32 M
+    /// @param compressor the [LZ4Compressor] instance to use to compress
+    ///                   data
+    /// @see #LZ4BlockOutputStream(OutputStream, int, LZ4Compressor, Checksum, boolean)
+    /// @see StreamingXXHash32#asChecksum()
     public LZ4BlockOutputStream(OutputStream out, int blockSize, LZ4Compressor compressor) {
         this(out, blockSize, compressor, XXHashFactory.fastestInstance().newStreamingHash32(DEFAULT_SEED).asChecksum(), false);
     }
 
-    /**
-     * Creates a new instance which compresses with the standard LZ4 compression
-     * algorithm.
-     *
-     * @param out       the {@link OutputStream} to feed
-     * @param blockSize the maximum number of bytes to try to compress at once,
-     *                  must be &gt;= 64 and &lt;= 32 M
-     * @see #LZ4BlockOutputStream(OutputStream, int, LZ4Compressor)
-     * @see LZ4Factory#fastCompressor()
-     */
+    /// Creates a new instance which compresses with the standard LZ4 compression
+    /// algorithm.
+    ///
+    /// @param out       the [OutputStream] to feed
+    /// @param blockSize the maximum number of bytes to try to compress at once,
+    ///                  must be &gt;= 64 and &lt;= 32 M
+    /// @see #LZ4BlockOutputStream(OutputStream, int, LZ4Compressor)
+    /// @see LZ4Factory#fastCompressor()
     public LZ4BlockOutputStream(OutputStream out, int blockSize) {
         this(out, blockSize, LZ4Factory.fastestInstance().fastCompressor());
     }
 
-    /**
-     * Creates a new instance which compresses into blocks of 64 KB.
-     *
-     * @param out the {@link OutputStream} to feed
-     * @see #LZ4BlockOutputStream(OutputStream, int)
-     */
+    /// Creates a new instance which compresses into blocks of 64 KB.
+    ///
+    /// @param out the [OutputStream] to feed
+    /// @see #LZ4BlockOutputStream(OutputStream, int)
     public LZ4BlockOutputStream(OutputStream out) {
         this(out, 1 << 16);
     }
@@ -224,16 +214,14 @@ public class LZ4BlockOutputStream extends FilterOutputStream {
         o = 0;
     }
 
-    /**
-     * Flushes this compressed {@link OutputStream}.
-     * <p>
-     * If the stream has been created with <code>syncFlush=true</code>, pending
-     * data will be compressed and appended to the underlying {@link OutputStream}
-     * before calling {@link OutputStream#flush()} on the underlying stream.
-     * Otherwise, this method just flushes the underlying stream, so pending
-     * data might not be available for reading until {@link #finish()} or
-     * {@link #close()} is called.
-     */
+    /// Flushes this compressed [OutputStream].
+    ///
+    /// If the stream has been created with <code>syncFlush=true</code>, pending
+    /// data will be compressed and appended to the underlying [OutputStream]
+    /// before calling [OutputStream#flush()] on the underlying stream.
+    /// Otherwise, this method just flushes the underlying stream, so pending
+    /// data might not be available for reading until [#finish()] or
+    /// [#close()] is called.
     @Override
     public void flush() throws IOException {
         if (out != null) {
@@ -244,12 +232,10 @@ public class LZ4BlockOutputStream extends FilterOutputStream {
         }
     }
 
-    /**
-     * Same as {@link #close()} except that it doesn't close the underlying stream.
-     * This can be useful if you want to keep on using the underlying stream.
-     *
-     * @throws IOException if an I/O error occurs.
-     */
+    /// Same as [#close()] except that it doesn't close the underlying stream.
+    /// This can be useful if you want to keep on using the underlying stream.
+    ///
+    /// @throws IOException if an I/O error occurs.
     public void finish() throws IOException {
         ensureNotFinished();
         flushBufferedData();

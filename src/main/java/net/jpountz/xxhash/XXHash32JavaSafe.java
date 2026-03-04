@@ -10,9 +10,7 @@ import java.nio.ByteBuffer;
 import net.jpountz.util.SafeUtils;
 import net.jpountz.util.ByteBufferUtils;
 
-/**
- * {@link XXHash32} implementation.
- */
+/// [XXHash32] implementation.
 final class XXHash32JavaSafe extends XXHash32 {
 
     public static final XXHash32 INSTANCE = new XXHash32JavaSafe();

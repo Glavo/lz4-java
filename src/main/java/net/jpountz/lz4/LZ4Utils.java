@@ -40,14 +40,12 @@ enum LZ4Utils {
         return length + length / 255 + 16;
     }
 
-    /**
-     * Returns {@code true} if {@code available < required}.
-     * <p>
-     * Should be used like this:
-     * <pre>
-     * if (notEnoughSpace(end - off, <i>required</i>)) ...
-     * </pre>
-     */
+    /// Returns `true` if `available < required`.
+    ///
+    /// Should be used like this:
+    /// <pre>
+    /// if (notEnoughSpace(end - off, <i>required</i>)) ...
+    /// </pre>
     static boolean notEnoughSpace(int available, int required) {
         if (required < 0) {
             // Overflow; so not enough space
@@ -62,12 +60,10 @@ enum LZ4Utils {
         assert RUN_MASK == ML_MASK;
     }
 
-    /**
-     * The LZ4 format uses two integers per sequence, encoded in a special format: 4 bits in a shared "token" byte, and
-     * then possibly multiple additional bytes. This method returns the number of bytes used to encode a particular
-     * value, excluding the 4 shared bits. This is the exact length of the encoding {@link LZ4SafeUtils#writeLen} and
-     * equivalent methods implement.
-     */
+    /// The LZ4 format uses two integers per sequence, encoded in a special format: 4 bits in a shared "token" byte, and
+    /// then possibly multiple additional bytes. This method returns the number of bytes used to encode a particular
+    /// value, excluding the 4 shared bits. This is the exact length of the encoding [LZ4SafeUtils#writeLen] and
+    /// equivalent methods implement.
     static int lengthOfEncodedInteger(int value) {
         if (value >= RUN_MASK) {
             return (value - RUN_MASK) / 0xff + 1;
@@ -76,20 +72,17 @@ enum LZ4Utils {
         }
     }
 
-    /**
-     * Get the length of an encoded LZ4 sequence. An LZ4 sequence consists of a <i>run</i>, containing bytes that are
-     * copied from the compressed input as-is, and a <i>match</i> which is a reference to previously decompressed bytes.
-     * <p>
-     * Encoding:
-     *
-     * <ul>
-     *   <li>1 byte: Token containing 4 bits of the run length and match length each</li>
-     *   <li>Possibly more bytes to encode the run length</li>
-     *   <li>The run bytes</li>
-     *   <li>2 bytes: Match offset</li>
-     *   <li>Possibly more bytes to encode the match length</li>
-     * </ul>
-     */
+    /// Get the length of an encoded LZ4 sequence. An LZ4 sequence consists of a _run_, containing bytes that are
+    /// copied from the compressed input as-is, and a _match_ which is a reference to previously decompressed bytes.
+    ///
+    /// Encoding:
+    ///
+    ///     - 1 byte: Token containing 4 bits of the run length and match length each
+    ///     - Possibly more bytes to encode the run length
+    ///     - The run bytes
+    ///     - 2 bytes: Match offset
+    ///     - Possibly more bytes to encode the match length
+    ///
     static int sequenceLength(int runLen, int matchLen) {
         long len = 1 + (long) lengthOfEncodedInteger(runLen) + (long) runLen + 2 + (long) lengthOfEncodedInteger(matchLen);
         if (len > Integer.MAX_VALUE) {
@@ -110,24 +103,20 @@ enum LZ4Utils {
         return (i * -1640531535) >>> ((MIN_MATCH * 8) - HASH_LOG_HC);
     }
 
-    /**
-     * Zero out a buffer.
-     *
-     * @param array The input array
-     * @param start The start index
-     * @param end   The end index (exclusive)
-     */
+    /// Zero out a buffer.
+    ///
+    /// @param array The input array
+    /// @param start The start index
+    /// @param end   The end index (exclusive)
     static void zero(byte[] array, int start, int end) {
         Arrays.fill(array, start, end, (byte) 0);
     }
 
-    /**
-     * Zero out a buffer.
-     *
-     * @param bb    The input buffer
-     * @param start The start index
-     * @param end   The end index (exclusive)
-     */
+    /// Zero out a buffer.
+    ///
+    /// @param bb    The input buffer
+    /// @param start The start index
+    /// @param end   The end index (exclusive)
     static void zero(ByteBuffer bb, int start, int end) {
         for (int i = start; i < end; i++) {
             bb.put(i, (byte) 0);

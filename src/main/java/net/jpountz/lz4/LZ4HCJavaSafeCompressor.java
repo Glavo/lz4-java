@@ -12,9 +12,7 @@ import net.jpountz.lz4.LZ4Utils.Match;
 import net.jpountz.util.ByteBufferUtils;
 import net.jpountz.util.SafeUtils;
 
-/**
- * High compression compressor.
- */
+/// High compression compressor.
 final class LZ4HCJavaSafeCompressor extends LZ4Compressor {
 
     public static final LZ4Compressor INSTANCE = new LZ4HCJavaSafeCompressor();

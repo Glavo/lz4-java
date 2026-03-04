@@ -22,9 +22,7 @@ import static java.lang.invoke.MethodHandles.byteArrayViewVarHandle;
 import static java.nio.ByteOrder.BIG_ENDIAN;
 import static java.nio.ByteOrder.LITTLE_ENDIAN;
 
-/**
- * <b>FOR INTERNAL USE ONLY</b>
- */
+/// **FOR INTERNAL USE ONLY**
 public enum SafeUtils {
     ;
 

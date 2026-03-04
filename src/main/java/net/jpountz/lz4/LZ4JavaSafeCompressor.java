@@ -11,9 +11,7 @@ import java.util.Arrays;
 import net.jpountz.util.ByteBufferUtils;
 import net.jpountz.util.SafeUtils;
 
-/**
- * Compressor.
- */
+/// Compressor.
 final class LZ4JavaSafeCompressor extends LZ4Compressor {
 
     public static final LZ4Compressor INSTANCE = new LZ4JavaSafeCompressor();

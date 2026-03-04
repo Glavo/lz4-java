@@ -10,9 +10,7 @@ import java.nio.ByteBuffer;
 import net.jpountz.util.ByteBufferUtils;
 import net.jpountz.util.SafeUtils;
 
-/**
- * Decompressor.
- */
+/// Decompressor.
 final class LZ4JavaSafeFastDecompressor extends LZ4FastDecompressor {
 
     public static final LZ4FastDecompressor INSTANCE = new LZ4JavaSafeFastDecompressor();

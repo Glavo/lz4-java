@@ -20,26 +20,24 @@ import java.io.Closeable;
  */
 
 
-/**
- * Streaming interface for {@link XXHash32}.
- * <p>
- * This API is compatible with the {@link XXHash32 block API} and the following
- * code samples are equivalent:
- * <pre class="prettyprint">
- *   int hash(XXHashFactory xxhashFactory, byte[] buf, int off, int len, int seed) {
- *     return xxhashFactory.hash32().hash(buf, off, len, seed);
- *   }
- * </pre>
- * <pre class="prettyprint">
- *   int hash(XXHashFactory xxhashFactory, byte[] buf, int off, int len, int seed) {
- *     StreamingXXHash32 sh32 = xxhashFactory.newStreamingHash32(seed);
- *     sh32.update(buf, off, len);
- *     return sh32.getValue();
- *   }
- * </pre>
- * <p>
- * Instances of this class are <b>not</b> thread-safe.
- */
+/// Streaming interface for [XXHash32].
+///
+/// This API is compatible with the [block API][XXHash32] and the following
+/// code samples are equivalent:
+/// <pre class="prettyprint">
+///   int hash(XXHashFactory xxhashFactory, byte[] buf, int off, int len, int seed) {
+///     return xxhashFactory.hash32().hash(buf, off, len, seed);
+///   }
+/// </pre>
+/// <pre class="prettyprint">
+///   int hash(XXHashFactory xxhashFactory, byte[] buf, int off, int len, int seed) {
+///     StreamingXXHash32 sh32 = xxhashFactory.newStreamingHash32(seed);
+///     sh32.update(buf, off, len);
+///     return sh32.getValue();
+///   }
+/// </pre>
+///
+/// Instances of this class are **not** thread-safe.
 public abstract class StreamingXXHash32 implements Closeable {
 
     final int seed;
@@ -48,34 +46,26 @@ public abstract class StreamingXXHash32 implements Closeable {
         this.seed = seed;
     }
 
-    /**
-     * Returns the value of the checksum.
-     *
-     * @return the checksum
-     */
+    /// Returns the value of the checksum.
+    ///
+    /// @return the checksum
     public abstract int getValue();
 
-    /**
-     * Updates the value of the hash with buf[off:off+len].
-     *
-     * @param buf the input data
-     * @param off the start offset in buf
-     * @param len the number of bytes to hash
-     */
+    /// Updates the value of the hash with buf[off:off+len].
+    ///
+    /// @param buf the input data
+    /// @param off the start offset in buf
+    /// @param len the number of bytes to hash
     public abstract void update(byte[] buf, int off, int len);
 
-    /**
-     * Resets this instance to the state it had right after instantiation. The
-     * seed remains unchanged.
-     */
+    /// Resets this instance to the state it had right after instantiation. The
+    /// seed remains unchanged.
     public abstract void reset();
 
-    /**
-     * Releases any system resources associated with this instance.
-     * It is not mandatory to call this method after using this instance
-     * because the system resources are released anyway when this instance
-     * is reclaimed by GC.
-     */
+    /// Releases any system resources associated with this instance.
+    /// It is not mandatory to call this method after using this instance
+    /// because the system resources are released anyway when this instance
+    /// is reclaimed by GC.
     @Override
     public void close() {
     }
@@ -85,12 +75,10 @@ public abstract class StreamingXXHash32 implements Closeable {
         return getClass().getSimpleName() + "(seed=" + seed + ")";
     }
 
-    /**
-     * Returns a {@link Checksum} view of this instance. Modifications to the view
-     * will modify this instance too and vice-versa.
-     *
-     * @return the {@link Checksum} object representing this instance
-     */
+    /// Returns a [Checksum] view of this instance. Modifications to the view
+    /// will modify this instance too and vice-versa.
+    ///
+    /// @return the [Checksum] object representing this instance
     public final Checksum asChecksum() {
         return new Checksum() {
 

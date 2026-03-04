@@ -16,9 +16,7 @@ package net.jpountz.lz4;
  * limitations under the License.
  */
 
-/**
- * @deprecated Use {@link LZ4SafeDecompressor} instead.
- */
+/// @deprecated Use [LZ4SafeDecompressor] instead.
 @Deprecated
 public interface LZ4UnknownSizeDecompressor {
 

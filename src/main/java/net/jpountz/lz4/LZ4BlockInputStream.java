@@ -35,13 +35,11 @@ import net.jpountz.xxhash.StreamingXXHash32;
 import net.jpountz.xxhash.XXHash32;
 import net.jpountz.xxhash.XXHashFactory;
 
-/**
- * {@link InputStream} implementation to decode data written with
- * {@link LZ4BlockOutputStream}. This class is not thread-safe and does not
- * support {@link #mark(int)}/{@link #reset()}.
- *
- * @see LZ4BlockOutputStream
- */
+/// [InputStream] implementation to decode data written with
+/// [LZ4BlockOutputStream]. This class is not thread-safe and does not
+/// support [#mark(int)]/[#reset()].
+///
+/// @see LZ4BlockOutputStream
 public class LZ4BlockInputStream extends FilterInputStream {
 
     private final LZ4FastDecompressor fastDecompressor;
@@ -54,97 +52,85 @@ public class LZ4BlockInputStream extends FilterInputStream {
     private int o;
     private boolean finished;
 
-    /**
-     * Creates a new LZ4 input stream to read from the specified underlying InputStream.
-     *
-     * @param in               the {@link InputStream} to poll
-     * @param fastDecompressor the {@link LZ4FastDecompressor} instance to
-     *                         use
-     * @param checksum         the {@link Checksum} instance to use, must be
-     *                         equivalent to the instance which has been used to
-     *                         write the stream
-     * @param stopOnEmptyBlock whether read is stopped on an empty block
-     * @deprecated Use {@link #newBuilder()} instead.
-     */
+    /// Creates a new LZ4 input stream to read from the specified underlying InputStream.
+    ///
+    /// @param in               the [InputStream] to poll
+    /// @param fastDecompressor the [LZ4FastDecompressor] instance to
+    ///                         use
+    /// @param checksum         the [Checksum] instance to use, must be
+    ///                         equivalent to the instance which has been used to
+    ///                         write the stream
+    /// @param stopOnEmptyBlock whether read is stopped on an empty block
+    /// @deprecated Use [#newBuilder()] instead.
     @Deprecated
     public LZ4BlockInputStream(InputStream in, LZ4FastDecompressor fastDecompressor, Checksum checksum, boolean stopOnEmptyBlock) {
         this(in, fastDecompressor, null, checksum, stopOnEmptyBlock);
     }
 
-    /**
-     * Creates a new LZ4 input stream to read from the specified underlying InputStream.
-     *
-     * @param in               the {@link InputStream} to poll
-     * @param fastDecompressor the {@link LZ4FastDecompressor} instance to
-     *                         use
-     * @param checksum         the {@link Checksum} instance to use, must be
-     *                         equivalent to the instance which has been used to
-     *                         write the stream
-     * @see #LZ4BlockInputStream(InputStream, LZ4FastDecompressor, Checksum, boolean)
-     * @deprecated Use {@link #newBuilder()} instead.
-     */
+    /// Creates a new LZ4 input stream to read from the specified underlying InputStream.
+    ///
+    /// @param in               the [InputStream] to poll
+    /// @param fastDecompressor the [LZ4FastDecompressor] instance to
+    ///                         use
+    /// @param checksum         the [Checksum] instance to use, must be
+    ///                         equivalent to the instance which has been used to
+    ///                         write the stream
+    /// @see #LZ4BlockInputStream(InputStream, LZ4FastDecompressor, Checksum, boolean)
+    /// @deprecated Use [#newBuilder()] instead.
     @Deprecated
     public LZ4BlockInputStream(InputStream in, LZ4FastDecompressor fastDecompressor, Checksum checksum) {
         this(in, fastDecompressor, checksum, true);
     }
 
-    /**
-     * Creates a new LZ4 input stream to read from the specified underlying InputStream, using {@link XXHash32} for checksuming.
-     *
-     * @param in               the {@link InputStream} to poll
-     * @param fastDecompressor the {@link LZ4FastDecompressor} instance to
-     *                         use
-     * @see #LZ4BlockInputStream(InputStream, LZ4FastDecompressor, Checksum, boolean)
-     * @see StreamingXXHash32#asChecksum()
-     * @deprecated Use {@link #newBuilder()} instead.
-     */
+    /// Creates a new LZ4 input stream to read from the specified underlying InputStream, using [XXHash32] for checksuming.
+    ///
+    /// @param in               the [InputStream] to poll
+    /// @param fastDecompressor the [LZ4FastDecompressor] instance to
+    ///                         use
+    /// @see #LZ4BlockInputStream(InputStream, LZ4FastDecompressor, Checksum, boolean)
+    /// @see StreamingXXHash32#asChecksum()
+    /// @deprecated Use [#newBuilder()] instead.
     @Deprecated
     public LZ4BlockInputStream(InputStream in, LZ4FastDecompressor fastDecompressor) {
         this(in, fastDecompressor, XXHashFactory.fastestInstance().newStreamingHash32(DEFAULT_SEED).asChecksum(), true);
     }
 
-    /**
-     * Creates a new LZ4 input stream to read from the specified underlying InputStream, using {@link XXHash32} for checksuming.
-     *
-     * @param in               the {@link InputStream} to poll
-     * @param stopOnEmptyBlock whether read is stopped on an empty block
-     * @see #LZ4BlockInputStream(InputStream, LZ4FastDecompressor, Checksum, boolean)
-     * @see LZ4Factory#fastestInstance()
-     * @see StreamingXXHash32#asChecksum()
-     * @deprecated Use {@link #newBuilder()} instead.
-     */
+    /// Creates a new LZ4 input stream to read from the specified underlying InputStream, using [XXHash32] for checksuming.
+    ///
+    /// @param in               the [InputStream] to poll
+    /// @param stopOnEmptyBlock whether read is stopped on an empty block
+    /// @see #LZ4BlockInputStream(InputStream, LZ4FastDecompressor, Checksum, boolean)
+    /// @see LZ4Factory#fastestInstance()
+    /// @see StreamingXXHash32#asChecksum()
+    /// @deprecated Use [#newBuilder()] instead.
     @Deprecated
     public LZ4BlockInputStream(InputStream in, boolean stopOnEmptyBlock) {
         this(in, LZ4Factory.fastestInstance().fastDecompressor(), XXHashFactory.fastestInstance().newStreamingHash32(DEFAULT_SEED).asChecksum(), stopOnEmptyBlock);
     }
 
-    /**
-     * Creates a new LZ4 input stream to read from the specified underlying InputStream, using {@link XXHash32} for checksuming.
-     *
-     * @param in the {@link InputStream} to poll
-     * @see #LZ4BlockInputStream(InputStream, LZ4FastDecompressor)
-     * @see LZ4Factory#fastestInstance()
-     * @deprecated Use {@link #newBuilder()} instead.
-     */
+    /// Creates a new LZ4 input stream to read from the specified underlying InputStream, using [XXHash32] for checksuming.
+    ///
+    /// @param in the [InputStream] to poll
+    /// @see #LZ4BlockInputStream(InputStream, LZ4FastDecompressor)
+    /// @see LZ4Factory#fastestInstance()
+    /// @deprecated Use [#newBuilder()] instead.
     @Deprecated
     public LZ4BlockInputStream(InputStream in) {
         this(in, LZ4Factory.fastestInstance().fastDecompressor());
     }
 
-    /**
-     * Creates a new LZ4 input stream to read from the specified underlying InputStream.
-     *
-     * @param in               the {@link InputStream} to poll
-     * @param fastDecompressor the {@link LZ4FastDecompressor} instance to
-     *                         use
-     * @param safeDecompressor the {@link LZ4SafeDecompressor} instance to
-     *                         use (if both fastDecompressor and safeDecompressor are
-     *                         specified then the fastDecompressor gets used)
-     * @param checksum         the {@link Checksum} instance to use, must be
-     *                         equivalent to the instance which has been used to
-     *                         write the stream
-     * @param stopOnEmptyBlock whether read is stopped on an empty block
-     */
+    /// Creates a new LZ4 input stream to read from the specified underlying InputStream.
+    ///
+    /// @param in               the [InputStream] to poll
+    /// @param fastDecompressor the [LZ4FastDecompressor] instance to
+    ///                         use
+    /// @param safeDecompressor the [LZ4SafeDecompressor] instance to
+    ///                         use (if both fastDecompressor and safeDecompressor are
+    ///                         specified then the fastDecompressor gets used)
+    /// @param checksum         the [Checksum] instance to use, must be
+    ///                         equivalent to the instance which has been used to
+    ///                         write the stream
+    /// @param stopOnEmptyBlock whether read is stopped on an empty block
     private LZ4BlockInputStream(InputStream in, LZ4FastDecompressor fastDecompressor, LZ4SafeDecompressor safeDecompressor,
                                 Checksum checksum, boolean stopOnEmptyBlock) {
         super(in);
@@ -159,16 +145,14 @@ public class LZ4BlockInputStream extends FilterInputStream {
         finished = false;
     }
 
-    /**
-     * Creates a new LZ4 block input stream builder. The following are defaults:
-     * <ul>
-     * <li> decompressor - {@code LZ4Factory.fastestInstance().safeDecompressor()} </li>
-     * <li> checksum - {@link XXHash32} </li>
-     * <li> stopOnEmptyBlock - {@code true} </li>
-     * </ul>
-     *
-     * @return new instance of {@link Builder} to be used to configure and build new LZ4 input stream
-     */
+    /// Creates a new LZ4 block input stream builder. The following are defaults:
+    ///
+    ///   -  decompressor - `LZ4Factory.fastestInstance().safeDecompressor()`
+    ///   -  checksum - [XXHash32]
+    ///   -  stopOnEmptyBlock - `true`
+    ///
+    ///
+    /// @return new instance of [Builder] to be used to configure and build new LZ4 input stream
     public static Builder newBuilder() {
         return new Builder();
     }
@@ -358,9 +342,7 @@ public class LZ4BlockInputStream extends FilterInputStream {
                 + ", checksum=" + checksum + ")";
     }
 
-    /**
-     * Builder for {@link LZ4BlockInputStream}
-     */
+    /// Builder for [LZ4BlockInputStream]
     public static final class Builder {
         private boolean stopOnEmptyBlock = true;
         private LZ4FastDecompressor fastDecompressor;
@@ -370,67 +352,58 @@ public class LZ4BlockInputStream extends FilterInputStream {
         private Builder() {
         }
 
-        /**
-         * Registers value of stopOnEmptyBlock to be used by the builder
-         *
-         * @param stopOnEmptyBlock whether read is stopped on an empty block
-         * @return current builder instance
-         */
+        /// Registers value of stopOnEmptyBlock to be used by the builder
+        ///
+        /// @param stopOnEmptyBlock whether read is stopped on an empty block
+        /// @return current builder instance
         public Builder withStopOnEmptyBlock(boolean stopOnEmptyBlock) {
             this.stopOnEmptyBlock = stopOnEmptyBlock;
             return this;
         }
 
-        /**
-         * Registers {@link LZ4FastDecompressor} to be used by the builder as a decompressor. Overrides one set by
-         * {@link #withDecompressor(LZ4SafeDecompressor)}
-         *
-         * @param fastDecompressor the {@link LZ4FastDecompressor} instance to use
-         * @return current builder instance
-         */
+        /// Registers [LZ4FastDecompressor] to be used by the builder as a decompressor. Overrides one set by
+        /// [#withDecompressor(LZ4SafeDecompressor)]
+        ///
+        /// @param fastDecompressor the [LZ4FastDecompressor] instance to use
+        /// @return current builder instance
         public Builder withDecompressor(LZ4FastDecompressor fastDecompressor) {
             this.fastDecompressor = fastDecompressor;
             this.safeDecompressor = null;
             return this;
         }
 
-        /**
-         * Registers {@link LZ4SafeDecompressor} to be used by the builder as a decompressor. Overrides one set by
-         * {@link #withDecompressor(LZ4FastDecompressor)}
-         *
-         * @param safeDecompressor the {@link LZ4SafeDecompressor} instance to use.
-         * @return current builder instance
-         */
+        /// Registers [LZ4SafeDecompressor] to be used by the builder as a decompressor. Overrides one set by
+        /// [#withDecompressor(LZ4FastDecompressor)]
+        ///
+        /// @param safeDecompressor the [LZ4SafeDecompressor] instance to use.
+        /// @return current builder instance
         public Builder withDecompressor(LZ4SafeDecompressor safeDecompressor) {
             this.safeDecompressor = safeDecompressor;
             this.fastDecompressor = null;
             return this;
         }
 
-        /**
-         * Registers {@link Checksum} to be used by the builder
-         * <p>Note: Since checksum objects are stateful, if you set one explicitly here, the builder can only be used once.
-         *
-         * @param checksum the {@link Checksum} instance to use, must be
-         *                 equivalent to the instance which has been used to
-         *                 write the stream
-         * @return current builder instance
-         */
+        /// Registers [Checksum] to be used by the builder
+        ///
+        /// Note: Since checksum objects are stateful, if you set one explicitly here, the builder can only be used once.
+        ///
+        /// @param checksum the [Checksum] instance to use, must be
+        ///                 equivalent to the instance which has been used to
+        ///                 write the stream
+        /// @return current builder instance
         public Builder withChecksum(Checksum checksum) {
             this.checksum = checksum;
             return this;
         }
 
-        /**
-         * Creates a new LZ4 input stream to read from the specified InputStream with specified parameters
-         *
-         * @param in the {@link InputStream} to poll
-         * @return new instance of {@link LZ4BlockInputStream} using parameters set in the builder and provided InputStream
-         * @see #withChecksum(Checksum)
-         * @see #withDecompressor(LZ4FastDecompressor)
-         * @see #withDecompressor(LZ4SafeDecompressor)
-         * @see #withStopOnEmptyBlock(boolean)
-         */
+        /// Creates a new LZ4 input stream to read from the specified InputStream with specified parameters
+        ///
+        /// @param in the [InputStream] to poll
+        /// @return new instance of [LZ4BlockInputStream] using parameters set in the builder and provided InputStream
+        /// @see #withChecksum(Checksum)
+        /// @see #withDecompressor(LZ4FastDecompressor)
+        /// @see #withDecompressor(LZ4SafeDecompressor)
+        /// @see #withStopOnEmptyBlock(boolean)
         public LZ4BlockInputStream build(InputStream in) {
             Checksum checksum = this.checksum;
             LZ4FastDecompressor fastDecompressor = this.fastDecompressor;

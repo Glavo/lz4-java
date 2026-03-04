@@ -31,19 +31,17 @@ import java.util.Locale;
 
 import static net.jpountz.lz4.LZ4Utils.notEnoughSpace;
 
-/**
- * Implementation of the v1.5.1 LZ4 Frame format. This class is NOT thread safe.
- * <p>
- * Not Supported:<ul>
- * <li>Dependent blocks</li>
- * <li>Legacy streams</li>
- * <li>Multiple frames (one LZ4FrameOutputStream is one frame)</li>
- * </ul>
- * <p>
- * Originally based on kafka's KafkaLZ4BlockOutputStream.
- *
- * @see <a href="https://github.com/lz4/lz4/blob/dev/doc/lz4_Frame_format.md">LZ4 Framing Format Spec 1.5.1</a>
- */
+/// Implementation of the v1.5.1 LZ4 Frame format. This class is NOT thread safe.
+///
+/// Not Supported:
+///   - Dependent blocks
+///   - Legacy streams
+///   - Multiple frames (one LZ4FrameOutputStream is one frame)
+///
+///
+/// Originally based on kafka's KafkaLZ4BlockOutputStream.
+///
+/// @see <a href="https://github.com/lz4/lz4/blob/dev/doc/lz4_Frame_format.md">LZ4 Framing Format Spec 1.5.1</a>
 public class LZ4FrameOutputStream extends FilterOutputStream {
 
     static final int INTEGER_BYTES = Integer.SIZE >>> 3; // or Integer.BYTES in Java 1.8
@@ -100,44 +98,38 @@ public class LZ4FrameOutputStream extends FilterOutputStream {
     private FrameInfo frameInfo = null;
 
 
-    /**
-     * Creates a new {@link OutputStream} that will compress data of unknown size using the LZ4 algorithm.
-     *
-     * @param out       the output stream to compress
-     * @param blockSize the BLOCKSIZE to use
-     * @param bits      a set of features to use
-     * @throws IOException if an I/O error occurs
-     * @see #LZ4FrameOutputStream(OutputStream, BLOCKSIZE, long, FLG.Bits...)
-     */
+    /// Creates a new [OutputStream] that will compress data of unknown size using the LZ4 algorithm.
+    ///
+    /// @param out       the output stream to compress
+    /// @param blockSize the BLOCKSIZE to use
+    /// @param bits      a set of features to use
+    /// @throws IOException if an I/O error occurs
+    /// @see #LZ4FrameOutputStream(OutputStream, BLOCKSIZE, long, FLG.Bits...)
     public LZ4FrameOutputStream(OutputStream out, BLOCKSIZE blockSize, FLG.Bits... bits) throws IOException {
         this(out, blockSize, -1L, bits);
     }
 
-    /**
-     * Creates a new {@link OutputStream} that will compress data using using fastest instances of {@link LZ4Compressor} and {@link XXHash32}.
-     *
-     * @param out       the output stream to compress
-     * @param blockSize the BLOCKSIZE to use
-     * @param knownSize the size of the uncompressed data. A value less than zero means unknown.
-     * @param bits      a set of features to use
-     * @throws IOException if an I/O error occurs
-     */
+    /// Creates a new [OutputStream] that will compress data using using fastest instances of [LZ4Compressor] and [XXHash32].
+    ///
+    /// @param out       the output stream to compress
+    /// @param blockSize the BLOCKSIZE to use
+    /// @param knownSize the size of the uncompressed data. A value less than zero means unknown.
+    /// @param bits      a set of features to use
+    /// @throws IOException if an I/O error occurs
     public LZ4FrameOutputStream(OutputStream out, BLOCKSIZE blockSize, long knownSize, FLG.Bits... bits) throws IOException {
         this(out, blockSize, knownSize, LZ4Factory.fastestInstance().fastCompressor(),
                 XXHashFactory.fastestInstance().hash32(), bits);
     }
 
-    /**
-     * Creates a new {@link OutputStream} that will compress data using the specified instances of {@link LZ4Compressor} and {@link XXHash32}.
-     *
-     * @param out        the output stream to compress
-     * @param blockSize  the BLOCKSIZE to use
-     * @param knownSize  the size of the uncompressed data. A value less than zero means unknown.
-     * @param compressor the {@link LZ4Compressor} instance to use to compress data
-     * @param checksum   the {@link XXHash32} instance to use to check data for integrity
-     * @param bits       a set of features to use
-     * @throws IOException if an I/O error occurs
-     */
+    /// Creates a new [OutputStream] that will compress data using the specified instances of [LZ4Compressor] and [XXHash32].
+    ///
+    /// @param out        the output stream to compress
+    /// @param blockSize  the BLOCKSIZE to use
+    /// @param knownSize  the size of the uncompressed data. A value less than zero means unknown.
+    /// @param compressor the [LZ4Compressor] instance to use to compress data
+    /// @param checksum   the [XXHash32] instance to use to check data for integrity
+    /// @param bits       a set of features to use
+    /// @throws IOException if an I/O error occurs
     public LZ4FrameOutputStream(OutputStream out, BLOCKSIZE blockSize, long knownSize,
                                 LZ4Compressor compressor, XXHash32 checksum, FLG.Bits... bits) throws IOException {
         super(out);
@@ -154,34 +146,28 @@ public class LZ4FrameOutputStream extends FilterOutputStream {
         writeHeader();
     }
 
-    /**
-     * Creates a new {@link OutputStream} that will compress data using the LZ4 algorithm. The block independence flag is set, and none of the other flags are set.
-     *
-     * @param out       The stream to compress
-     * @param blockSize the BLOCKSIZE to use
-     * @throws IOException if an I/O error occurs
-     * @see #LZ4FrameOutputStream(OutputStream, BLOCKSIZE, FLG.Bits...)
-     */
+    /// Creates a new [OutputStream] that will compress data using the LZ4 algorithm. The block independence flag is set, and none of the other flags are set.
+    ///
+    /// @param out       The stream to compress
+    /// @param blockSize the BLOCKSIZE to use
+    /// @throws IOException if an I/O error occurs
+    /// @see #LZ4FrameOutputStream(OutputStream, BLOCKSIZE, FLG.Bits...)
     public LZ4FrameOutputStream(OutputStream out, BLOCKSIZE blockSize) throws IOException {
         this(out, blockSize, DEFAULT_FEATURES);
     }
 
-    /**
-     * Creates a new {@link OutputStream} that will compress data using the LZ4 algorithm with 4-MB blocks.
-     *
-     * @param out the output stream to compress
-     * @throws IOException if an I/O error occurs
-     * @see #LZ4FrameOutputStream(OutputStream, BLOCKSIZE)
-     */
+    /// Creates a new [OutputStream] that will compress data using the LZ4 algorithm with 4-MB blocks.
+    ///
+    /// @param out the output stream to compress
+    /// @throws IOException if an I/O error occurs
+    /// @see #LZ4FrameOutputStream(OutputStream, BLOCKSIZE)
     public LZ4FrameOutputStream(OutputStream out) throws IOException {
         this(out, BLOCKSIZE.SIZE_4MB);
     }
 
-    /**
-     * Writes the magic number and frame descriptor to the underlying {@link OutputStream}.
-     *
-     * @throws IOException
-     */
+    /// Writes the magic number and frame descriptor to the underlying [OutputStream].
+    ///
+    /// @throws IOException
     private void writeHeader() throws IOException {
         final ByteBuffer headerBuffer = ByteBuffer.allocate(LZ4_MAX_HEADER_LENGTH).order(ByteOrder.LITTLE_ENDIAN);
         headerBuffer.putInt(MAGIC);
@@ -197,12 +183,10 @@ public class LZ4FrameOutputStream extends FilterOutputStream {
         out.write(headerBuffer.array(), 0, headerBuffer.position());
     }
 
-    /**
-     * Compresses buffered data, optionally computes an XXHash32 checksum, and writes the result to the underlying
-     * {@link OutputStream}.
-     *
-     * @throws IOException
-     */
+    /// Compresses buffered data, optionally computes an XXHash32 checksum, and writes the result to the underlying
+    /// [OutputStream].
+    ///
+    /// @throws IOException
     private void writeBlock() throws IOException {
         if (buffer.position() == 0) {
             return;
@@ -241,12 +225,10 @@ public class LZ4FrameOutputStream extends FilterOutputStream {
         buffer.rewind();
     }
 
-    /**
-     * Similar to the {@link #writeBlock()} method. Writes a 0-length block (without block checksum) to signal the end
-     * of the block stream.
-     *
-     * @throws IOException
-     */
+    /// Similar to the [#writeBlock()] method. Writes a 0-length block (without block checksum) to signal the end
+    /// of the block stream.
+    ///
+    /// @throws IOException
     private void writeEndMark() throws IOException {
         intLEBuffer.putInt(0, 0);
         out.write(intLEBuffer.array());
@@ -294,9 +276,7 @@ public class LZ4FrameOutputStream extends FilterOutputStream {
         super.flush();
     }
 
-    /**
-     * A simple state check to ensure the stream is still open.
-     */
+    /// A simple state check to ensure the stream is still open.
     private void ensureNotFinished() {
         if (frameInfo.isFinished()) {
             throw new IllegalStateException(CLOSED_STREAM);
