@@ -16,9 +16,9 @@ package net.jpountz.lz4;
  * limitations under the License.
  */
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -258,10 +258,8 @@ public class LZ4FrameIOStreamTest {
         }
     }
 
-    @ParameterizedTest(name = "size={0}")
-    @MethodSource("testSizes")
-    public void testSkippableOnly(int testSize) throws IOException {
-        final var testData = new TestData(testSize);
+    @Test
+    public void testSkippableOnly() throws IOException {
         final Path lz4File = createTempFile("lz4test", ".lz4");
         try {
             try (OutputStream fos = Files.newOutputStream(lz4File)) {
@@ -441,10 +439,8 @@ public class LZ4FrameIOStreamTest {
         }
     }
 
-    @ParameterizedTest(name = "size={0}")
-    @MethodSource("testSizes")
-    public void testUncompressableEnd(int testSize) throws IOException {
-        final var testData = new TestData(testSize);
+    @Test
+    public void testUncompressableEnd() throws IOException {
         final byte data = (byte) 0xEE;
         try (final ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
             try (final OutputStream os = new LZ4FrameOutputStream(baos, LZ4FrameOutputStream.BLOCKSIZE.SIZE_1MB)) {
@@ -501,11 +497,9 @@ public class LZ4FrameIOStreamTest {
         }
     }
 
-    @ParameterizedTest(name = "size={0}")
-    @MethodSource("testSizes")
-    public void testEmptyLZ4Input(int testSize) throws IOException {
-        final var testData = new TestData(testSize);
-        try (InputStream is = new LZ4FrameInputStream(new ByteArrayInputStream(new byte[0]))) {
+    @Test
+    public void testEmptyLZ4Input() throws IOException {
+        try (InputStream is = new LZ4FrameInputStream(InputStream.nullInputStream())) {
             assertThrows(IOException.class, is::read);
         }
     }
