@@ -62,6 +62,10 @@ tasks.test {
 
     systemProperty("net.jpountz.lz4.test.tempDir", testTempDir.get().asFile.absolutePath)
 
+    if (project.findProperty("net.jpountz.lz4.test.fuzz")?.toString().equals("true", true)) {
+        environment("JAZZER_FUZZ", "1")
+    }
+
     // Use more parallelism on large machines
     if ((ManagementFactory.getOperatingSystemMXBean() as OperatingSystemMXBean).totalMemorySize >= 14L * 1024L * 1024L * 1024L) {
         maxParallelForks = max(1, Runtime.getRuntime().availableProcessors() / 4)
