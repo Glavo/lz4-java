@@ -23,8 +23,8 @@ import java.nio.ByteBuffer;
 /// Instances of this class are thread-safe.
 public abstract class XXHash32 {
 
-    /// Computes the 32-bits hash of <code>buf[off:off+len]</code> using seed
-    /// <code>seed</code>.
+    /// Computes the 32-bits hash of `buf[off:off+len]` using seed
+    /// `seed`.
     ///
     /// @param buf  the input data
     /// @param off  the start offset in buf

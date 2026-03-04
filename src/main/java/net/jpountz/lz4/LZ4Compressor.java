@@ -24,7 +24,7 @@ import java.util.Arrays;
 /// Instances of this class are thread-safe.
 public abstract class LZ4Compressor {
 
-    /// Returns the maximum compressed length for an input of size <code>length</code>.
+    /// Returns the maximum compressed length for an input of size `length`.
     ///
     /// @param length the input size in bytes
     /// @return the maximum compressed length in bytes
@@ -33,14 +33,14 @@ public abstract class LZ4Compressor {
         return LZ4Utils.maxCompressedLength(length);
     }
 
-    /// Compresses <code>src[srcOff:srcOff+srcLen]</code> into
-    /// <code>dest[destOff:destOff+maxDestLen]</code> and returns the compressed
+    /// Compresses `src[srcOff:srcOff+srcLen]` into
+    /// `dest[destOff:destOff+maxDestLen]` and returns the compressed
     /// length.
     ///
     /// This method will throw a [LZ4Exception] if this compressor is unable
-    /// to compress the input into less than <code>maxDestLen</code> bytes. To
+    /// to compress the input into less than `maxDestLen` bytes. To
     /// prevent this exception to be thrown, you should make sure that
-    /// <code>maxDestLen &gt;= maxCompressedLength(srcLen)</code>.
+    /// `maxDestLen >= maxCompressedLength(srcLen)`.
     ///
     /// @param src        the source data
     /// @param srcOff     the start offset in src
@@ -52,14 +52,14 @@ public abstract class LZ4Compressor {
     /// @throws LZ4Exception if maxDestLen is too small
     public abstract int compress(byte[] src, int srcOff, int srcLen, byte[] dest, int destOff, int maxDestLen);
 
-    /// Compresses <code>src[srcOff:srcOff+srcLen]</code> into
-    /// <code>dest[destOff:destOff+maxDestLen]</code> and returns the compressed
+    /// Compresses `src[srcOff:srcOff+srcLen]` into
+    /// `dest[destOff:destOff+maxDestLen]` and returns the compressed
     /// length.
     ///
     /// This method will throw a [LZ4Exception] if this compressor is unable
-    /// to compress the input into less than <code>maxDestLen</code> bytes. To
+    /// to compress the input into less than `maxDestLen` bytes. To
     /// prevent this exception to be thrown, you should make sure that
-    /// <code>maxDestLen &gt;= maxCompressedLength(srcLen)</code>.
+    /// `maxDestLen &gt;= maxCompressedLength(srcLen)`.
     ///
     /// [ByteBuffer] positions remain unchanged.
     ///
@@ -98,7 +98,7 @@ public abstract class LZ4Compressor {
         return compress(src, 0, src.length, dest, 0);
     }
 
-    /// Convenience method which returns <code>src[srcOff:srcOff+srcLen]</code>
+    /// Convenience method which returns `src[srcOff:srcOff+srcLen]`
     /// compressed.
     ///
     /// **<span style="color:red">Warning</span>**: this method has an
@@ -134,7 +134,7 @@ public abstract class LZ4Compressor {
         return compress(src, 0, src.length);
     }
 
-    /// Compresses <code>src</code> into <code>dest</code>. Calling this method
+    /// Compresses `src` into `dest`. Calling this method
     /// will update the positions of both [ByteBuffer]s.
     ///
     /// @param src  the source data

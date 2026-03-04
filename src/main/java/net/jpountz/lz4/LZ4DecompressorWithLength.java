@@ -29,7 +29,7 @@ public class LZ4DecompressorWithLength {
     private final LZ4FastDecompressor fastDecompressor;
     private final LZ4SafeDecompressor safeDecompressor;
 
-    /// Returns the decompressed length of compressed data in <code>src</code>.
+    /// Returns the decompressed length of compressed data in `src`.
     ///
     /// @param src the compressed data
     /// @return the decompressed length
@@ -37,7 +37,7 @@ public class LZ4DecompressorWithLength {
         return getDecompressedLength(src, 0);
     }
 
-    /// Returns the decompressed length of compressed data in <code>src[srcOff:]</code>.
+    /// Returns the decompressed length of compressed data in `src[srcOff:]`.
     ///
     /// @param src    the compressed data
     /// @param srcOff the start offset in src
@@ -46,7 +46,7 @@ public class LZ4DecompressorWithLength {
         return (src[srcOff] & 0xFF) | (src[srcOff + 1] & 0xFF) << 8 | (src[srcOff + 2] & 0xFF) << 16 | src[srcOff + 3] << 24;
     }
 
-    /// Returns the decompressed length of compressed data in <code>src</code>.
+    /// Returns the decompressed length of compressed data in `src`.
     ///
     /// @param src the compressed data
     /// @return the decompressed length
@@ -54,7 +54,7 @@ public class LZ4DecompressorWithLength {
         return getDecompressedLength(src, src.position());
     }
 
-    /// Returns the decompressed length of compressed data in <code>src[srcOff:]</code>.
+    /// Returns the decompressed length of compressed data in `src[srcOff:]`.
     ///
     /// @param src    the compressed data
     /// @param srcOff the start offset in src
@@ -92,11 +92,11 @@ public class LZ4DecompressorWithLength {
     }
 
     /// When [LZ4FastDecompressor] was specified to the constructor,
-    /// decompresses <code>src[srcOff:]</code> into <code>dest[destOff:]</code>
-    /// and returns the number of bytes read from <code>src</code>, and
+    /// decompresses `src[srcOff:]` into `dest[destOff:]`
+    /// and returns the number of bytes read from `src`, and
     /// when [LZ4SafeDecompressor] was specified to the constructor,
-    /// decompresses <code>src[srcOff:src.length]</code> into <code>dest[destOff:]</code>
-    /// and returns the number of decompressed bytes written into <code>dest</code>.
+    /// decompresses `src[srcOff:src.length]` into `dest[destOff:]`
+    /// and returns the number of decompressed bytes written into `dest`.
     ///
     /// @param src     the compressed data
     /// @param srcOff  the start offset in src
@@ -112,11 +112,11 @@ public class LZ4DecompressorWithLength {
     }
 
     /// When [LZ4FastDecompressor] was specified to the constructor,
-    /// decompresses <code>src[srcOff:]</code> into <code>dest[destOff:]</code>
-    /// and returns the number of bytes read from <code>src</code>, and
+    /// decompresses `src[srcOff:]` into `dest[destOff:]`
+    /// and returns the number of bytes read from `src`, and
     /// when [LZ4SafeDecompressor] was specified to the constructor,
-    /// decompresses <code>src[srcOff:srcOff+srcLen]</code> into <code>dest[destOff:]</code>
-    /// and returns the number of decompressed bytes written into <code>dest</code>.
+    /// decompresses `src[srcOff:srcOff+srcLen]` into `dest[destOff:]`
+    /// and returns the number of decompressed bytes written into `dest`.
     ///
     /// @param src     the compressed data
     /// @param srcOff  the start offset in src
@@ -141,9 +141,9 @@ public class LZ4DecompressorWithLength {
         return decompress(src, 0);
     }
 
-    /// Convenience method which returns <code>src[srcOff:]</code>
+    /// Convenience method which returns `src[srcOff:]`
     /// decompressed when [LZ4FastDecompressor] was specified to the constructor,
-    /// or <code>src[srcOff:src.length]</code> decompressed when
+    /// or `src[srcOff:src.length]` decompressed when
     /// [LZ4SafeDecompressor] was specified to the constructor.
     ///
     /// **<span style="color:red">Warning</span>**: this method has an
@@ -161,9 +161,9 @@ public class LZ4DecompressorWithLength {
         return fastDecompressor.decompress(src, srcOff + 4, destLen);
     }
 
-    /// Convenience method which returns <code>src[srcOff:]</code>
+    /// Convenience method which returns `src[srcOff:]`
     /// decompressed when [LZ4FastDecompressor] was specified to the constructor,
-    /// or <code>src[srcOff:srcOff+srcLen]</code> decompressed when
+    /// or `src[srcOff:srcOff+srcLen]` decompressed when
     /// [LZ4SafeDecompressor] was specified to the constructor.
     ///
     /// **<span style="color:red">Warning</span>**: this method has an
@@ -182,9 +182,9 @@ public class LZ4DecompressorWithLength {
         return safeDecompressor.decompress(src, srcOff + 4, srcLen - 4, destLen);
     }
 
-    /// Decompresses <code>src</code> into <code>dest</code>.
+    /// Decompresses `src` into `dest`.
     /// When [LZ4SafeDecompressor] was specified to the constructor,
-    /// <code>src</code>'s [ByteBuffer#remaining()] must be exactly the size
+    /// `src`'s [ByteBuffer#remaining()] must be exactly the size
     /// of the compressed data. This method moves the positions of the buffers.
     ///
     /// @param src  the compressed data
@@ -203,11 +203,11 @@ public class LZ4DecompressorWithLength {
     }
 
     /// When [LZ4FastDecompressor] was specified to the constructor,
-    /// decompresses <code>src[srcOff:]</code> into <code>dest[destOff:]</code>
-    /// and returns the number of bytes read from <code>src</code>, and
+    /// decompresses `src[srcOff:]` into `dest[destOff:]`
+    /// and returns the number of bytes read from `src`, and
     /// when [LZ4SafeDecompressor] was specified to the constructor,
-    /// decompresses <code>src[srcOff:src.remaining()]</code> into <code>dest[destOff:]</code>
-    /// and returns the number of decompressed bytes written into <code>dest</code>.
+    /// decompresses `src[srcOff:src.remaining()]` into `dest[destOff:]`
+    /// and returns the number of decompressed bytes written into `dest`.
     /// The positions and limits of the [ByteBuffer]s remain unchanged.
     ///
     /// @param src     the compressed data
@@ -224,11 +224,11 @@ public class LZ4DecompressorWithLength {
     }
 
     /// When [LZ4FastDecompressor] was specified to the constructor,
-    /// decompresses <code>src[srcOff:]</code> into <code>dest[destOff:]</code>
-    /// and returns the number of bytes read from <code>src</code>, and
+    /// decompresses `src[srcOff:]` into `dest[destOff:]`
+    /// and returns the number of bytes read from `src`, and
     /// when [LZ4SafeDecompressor] was specified to the constructor,
-    /// decompresses <code>src[srcOff:srcOff+srcLen]</code> into <code>dest[destOff:]</code>
-    /// and returns the number of decompressed bytes written into <code>dest</code>.
+    /// decompresses `src[srcOff:srcOff+srcLen]` into `dest[destOff:]`
+    /// and returns the number of decompressed bytes written into `dest`.
     /// The positions and limits of the [ByteBuffer]s remain unchanged.
     ///
     /// @param src     the compressed data

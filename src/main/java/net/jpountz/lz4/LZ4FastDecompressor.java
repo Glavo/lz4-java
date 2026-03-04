@@ -32,9 +32,9 @@ import java.nio.ByteBuffer;
 /// @see LZ4Factory#nativeInstance()
 public abstract class LZ4FastDecompressor implements LZ4Decompressor {
 
-    /// Decompresses <code>src[srcOff:]</code> into <code>dest[destOff:destOff+destLen]</code>
-    /// and returns the number of bytes read from <code>src</code>.
-    /// <code>destLen</code> must be exactly the size of the decompressed data.
+    /// Decompresses `src[srcOff:]` into `dest[destOff:destOff+destLen]`
+    /// and returns the number of bytes read from `src`.
+    /// `destLen` must be exactly the size of the decompressed data.
     ///
     /// @param src     the compressed data
     /// @param srcOff  the start offset in src
@@ -44,9 +44,9 @@ public abstract class LZ4FastDecompressor implements LZ4Decompressor {
     /// @return the number of bytes read to restore the original input
     public abstract int decompress(byte[] src, int srcOff, byte[] dest, int destOff, int destLen);
 
-    /// Decompresses <code>src[srcOff:]</code> into <code>dest[destOff:destOff+destLen]</code>
-    /// and returns the number of bytes read from <code>src</code>.
-    /// <code>destLen</code> must be exactly the size of the decompressed data.
+    /// Decompresses `src[srcOff:]` into `dest[destOff:destOff+destLen]`
+    /// and returns the number of bytes read from `src`.
+    /// `destLen` must be exactly the size of the decompressed data.
     /// The positions and limits of the [ByteBuffer]s remain unchanged.
     ///
     /// @param src     the compressed data
@@ -78,7 +78,7 @@ public abstract class LZ4FastDecompressor implements LZ4Decompressor {
         return decompress(src, dest, dest.length);
     }
 
-    /// Convenience method which returns <code>src[srcOff:?]</code>
+    /// Convenience method which returns `src[srcOff:?]`
     /// decompressed.
     ///
     /// **<span style="color:red">Warning</span>**: this method has an
@@ -112,7 +112,7 @@ public abstract class LZ4FastDecompressor implements LZ4Decompressor {
         return decompress(src, 0, destLen);
     }
 
-    /// Decompresses <code>src</code> into <code>dest</code>. <code>dest</code>'s
+    /// Decompresses `src` into `dest`. `dest`'s
     /// [ByteBuffer#remaining()] must be exactly the size of the decompressed
     /// data. This method moves the positions of the buffers.
     ///
