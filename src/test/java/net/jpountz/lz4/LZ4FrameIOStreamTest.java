@@ -38,6 +38,8 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class LZ4FrameIOStreamTest {
     private static void copy(InputStream in, OutputStream out) throws IOException {
@@ -181,12 +183,12 @@ public class LZ4FrameIOStreamTest {
             buffer.rewind();
             assertEquals(LZ4FrameOutputStream.MAGIC, buffer.getInt());
             final BitSet b = BitSet.valueOf(new byte[]{buffer.get()});
-            Assertions.assertFalse(b.get(0));
-            Assertions.assertFalse(b.get(1));
-            Assertions.assertFalse(b.get(2));
-            Assertions.assertFalse(b.get(3));
-            Assertions.assertFalse(b.get(4));
-            Assertions.assertTrue(b.get(5));
+            assertFalse(b.get(0));
+            assertFalse(b.get(1));
+            assertFalse(b.get(2));
+            assertFalse(b.get(3));
+            assertFalse(b.get(4));
+            assertTrue(b.get(5));
             LZ4FrameOutputStream.BD bd = LZ4FrameOutputStream.BD.fromByte(buffer.get());
             assertEquals(LZ4FrameOutputStream.BLOCKSIZE.SIZE_4MB.getIndicator() << 4, bd.toByte());
         } finally {
@@ -300,7 +302,7 @@ public class LZ4FrameIOStreamTest {
             }
             try (LZ4FrameInputStream is = new LZ4FrameInputStream(Files.newInputStream(lz4File), true)) {
                 assertEquals(knownSize, is.getExpectedContentSize());
-                Assertions.assertTrue(is.isExpectedContentSizeDefined());
+                assertTrue(is.isExpectedContentSizeDefined());
                 testData.validateStreamEquals(is);
             }
         } finally {
@@ -322,7 +324,7 @@ public class LZ4FrameIOStreamTest {
             }
             try (LZ4FrameInputStream is = new LZ4FrameInputStream(Files.newInputStream(lz4File), true)) {
                 assertEquals(-1L, is.getExpectedContentSize());
-                Assertions.assertFalse(is.isExpectedContentSizeDefined());
+                assertFalse(is.isExpectedContentSizeDefined());
                 testData.validateStreamEquals(is);
             }
         } finally {
@@ -375,7 +377,7 @@ public class LZ4FrameIOStreamTest {
             }
             try (LZ4FrameInputStream is = new LZ4FrameInputStream(Files.newInputStream(lz4File))) {
                 Assertions.assertThrows(UnsupportedOperationException.class, is::getExpectedContentSize);
-                Assertions.assertFalse(is.isExpectedContentSizeDefined());
+                assertFalse(is.isExpectedContentSizeDefined());
                 testData.validateStreamEquals(is);
                 testData.validateStreamEquals(is);
                 testData.validateStreamEquals(is);
@@ -383,7 +385,7 @@ public class LZ4FrameIOStreamTest {
             }
             try (LZ4FrameInputStream is = new LZ4FrameInputStream(Files.newInputStream(lz4File), true)) {
                 assertEquals(-1L, is.getExpectedContentSize());
-                Assertions.assertFalse(is.isExpectedContentSizeDefined());
+                assertFalse(is.isExpectedContentSizeDefined());
                 testData.validateStreamEquals(is);
                 assertEquals(-1, is.read());
                 final byte[] tmpBuff = new byte[10];
@@ -544,7 +546,7 @@ public class LZ4FrameIOStreamTest {
                 assertEquals(0, is.available(), "available() should be 0 before first read");
 
                 if (is.read() != -1 && testSize > 1) {
-                    Assertions.assertTrue(
+                    assertTrue(
                             is.available() > 0,
                             "After reading 1 byte, available() should report > 0 bytes ready in the buffer"
                     );
