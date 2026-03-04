@@ -5,6 +5,7 @@ import kotlin.math.max
 
 plugins {
     id("java")
+    id("jacoco")
 }
 
 group = "org.glavo"
@@ -39,6 +40,15 @@ tasks.withType<JavaCompile> {
     options.release.set(17)
 }
 
+tasks.javadoc {
+    (options as StandardJavadocDocletOptions).also {
+        it.encoding("UTF-8")
+        it.addStringOption("link", "https://docs.oracle.com/en/java/javase/17/docs/api/")
+        it.addBooleanOption("html5", true)
+        it.addStringOption("Xdoclint:none", "-quiet")
+    }
+}
+
 val testTempDir = layout.buildDirectory.dir("test-tmp")
 
 tasks.test {
@@ -49,5 +59,14 @@ tasks.test {
     // Use more parallelism on large machines
     if ((ManagementFactory.getOperatingSystemMXBean() as OperatingSystemMXBean).totalMemorySize >= 14L * 1024L * 1024L * 1024L) {
         maxParallelForks = max(1, Runtime.getRuntime().availableProcessors() / 4)
+    }
+}
+
+tasks.jacocoTestReport {
+    dependsOn(tasks.test)
+    reports {
+        xml.required.set(true)
+        csv.required.set(true)
+        html.required.set(true)
     }
 }
