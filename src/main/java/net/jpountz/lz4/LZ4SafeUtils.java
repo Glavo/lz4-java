@@ -16,8 +16,6 @@ package net.jpountz.lz4;
  * limitations under the License.
  */
 
-import net.jpountz.util.SafeUtils;
-
 import static net.jpountz.lz4.LZ4Constants.LAST_LITERALS;
 import static net.jpountz.lz4.LZ4Constants.ML_BITS;
 import static net.jpountz.lz4.LZ4Constants.ML_MASK;
@@ -28,14 +26,6 @@ import static net.jpountz.lz4.LZ4Utils.sequenceLength;
 
 enum LZ4SafeUtils {
     ;
-
-    static int hash(byte[] buf, int i) {
-        return LZ4Utils.hash(SafeUtils.readInt(buf, i));
-    }
-
-    static int hash64k(byte[] buf, int i) {
-        return LZ4Utils.hash64k(SafeUtils.readInt(buf, i));
-    }
 
     static boolean readIntEquals(byte[] buf, int i, int j) {
         return buf[i] == buf[j] && buf[i + 1] == buf[j + 1] && buf[i + 2] == buf[j + 2] && buf[i + 3] == buf[j + 3];
