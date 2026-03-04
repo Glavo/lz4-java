@@ -62,10 +62,6 @@ public enum SafeUtils {
         return buf[i];
     }
 
-    public static int readIntBE(byte[] buf, int i) {
-        return (int) INT_BE.get(buf, i);
-    }
-
     public static int readIntLE(byte[] buf, int i) {
         return (int) INT_LE.get(buf, i);
     }
