@@ -37,14 +37,6 @@ import static net.jpountz.util.ByteBufferUtils.writeLong;
 enum LZ4ByteBufferUtils {
     ;
 
-    static int hash(ByteBuffer buf, int i) {
-        return LZ4Utils.hash(readInt(buf, i));
-    }
-
-    static int hash64k(ByteBuffer buf, int i) {
-        return LZ4Utils.hash64k(readInt(buf, i));
-    }
-
     static boolean readIntEquals(ByteBuffer buf, int i, int j) {
         return buf.getInt(i) == buf.getInt(j);
     }
@@ -218,26 +210,6 @@ enum LZ4ByteBufferUtils {
         }
         dest.put(dOff++, (byte) len);
         return dOff;
-    }
-
-    static class Match {
-        int start, ref, len;
-
-        void fix(int correction) {
-            start += correction;
-            ref += correction;
-            len -= correction;
-        }
-
-        int end() {
-            return start + len;
-        }
-    }
-
-    static void copyTo(Match m1, Match m2) {
-        m2.len = m1.len;
-        m2.start = m1.start;
-        m2.ref = m1.ref;
     }
 
 }
