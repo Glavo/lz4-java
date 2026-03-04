@@ -84,7 +84,9 @@ tasks.withType<Test> {
 }
 
 tasks.jacocoTestReport {
-    dependsOn(tasks.check)
+    dependsOn(tasks.test, testFlipByteOrder)
+    executionData(testFlipByteOrder.get())
+
     reports {
         xml.required.set(true)
         csv.required.set(true)
