@@ -33,13 +33,13 @@ import java.util.zip.Checksum;
 import net.jpountz.RandomContext;
 import net.jpountz.xxhash.XXHashFactory;
 
-import static org.junit.Assert.*;
-
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.FieldSource;
 import org.junit.jupiter.params.provider.ValueSource;
+
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public abstract class LZ4BlockStreamingTest extends AbstractLZ4Test {
 
