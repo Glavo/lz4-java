@@ -1,4 +1,7 @@
+import com.sun.management.OperatingSystemMXBean
 import org.glavo.gradle.LWJGL
+import java.lang.management.ManagementFactory
+import kotlin.math.max
 
 plugins {
     id("java")
@@ -40,5 +43,11 @@ val testTempDir = layout.buildDirectory.dir("test-tmp")
 
 tasks.test {
     useJUnitPlatform()
+
     systemProperty("net.jpountz.lz4.test.tempDir", testTempDir.get().asFile.absolutePath)
+
+    // Use more parallelism on large machines
+    if ((ManagementFactory.getOperatingSystemMXBean() as OperatingSystemMXBean).totalMemorySize >= 14L * 1024L * 1024L * 1024L) {
+        maxParallelForks = max(1, Runtime.getRuntime().availableProcessors() / 4)
+    }
 }
