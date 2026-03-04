@@ -18,6 +18,8 @@ package net.jpountz.lz4;
 
 import net.jpountz.util.SafeUtils;
 
+import java.util.Arrays;
+
 import static net.jpountz.lz4.LZ4Constants.LAST_LITERALS;
 import static net.jpountz.lz4.LZ4Constants.ML_BITS;
 import static net.jpountz.lz4.LZ4Constants.ML_MASK;
@@ -54,11 +56,9 @@ enum LZ4SafeUtils {
     }
 
     static int commonBytes(byte[] b, int o1, int o2, int limit) {
-        int count = 0;
-        while (o2 < limit && b[o1++] == b[o2++]) {
-            ++count;
-        }
-        return count;
+        int len = limit - o2;
+        int mismatch = Arrays.mismatch(b, o1, o1 + len, b, o2, limit);
+        return mismatch < 0 ? len : mismatch;
     }
 
     static int commonBytesBackward(byte[] b, int o1, int o2, int l1, int l2) {
