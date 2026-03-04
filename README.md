@@ -1,5 +1,8 @@
 # LZ4 Java Lightweight
 
+[![Gradle Check](https://github.com/Glavo/lz4-java/actions/workflows/check.yml/badge.svg)](https://github.com/Glavo/lz4-java/actions/workflows/check.yml)
+[![codecov](https://codecov.io/gh/Glavo/lz4-java/graph/badge.svg?token=50PHPEMS9R)](https://codecov.io/gh/Glavo/lz4-java)
+
 This project is a fork of [yawkat/lz4-java](https://github.com/yawkat/lz4-java).
 
 The goal of this project is to provide lightweight, fast, and safe implementations of the LZ4 and xxHash algorithms.
