@@ -17,7 +17,7 @@ jobs:
           sudo apt-get update && sudo apt-get install -y lz4 xxhash
       - uses: gradle/actions/setup-gradle@v5
       - run: ./gradlew check jacocoTestReport --info --no-daemon --stacktrace
-#      - name: Upload coverage report
-#        uses: codecov/codecov-action@v3
-#        with:
-#          token: ${{ secrets.CODECOV_TOKEN }}
+      - name: Upload coverage report
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
