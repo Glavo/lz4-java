@@ -22,6 +22,14 @@ import java.nio.ByteOrder;
 public enum Utils {
     ;
 
-    public static final ByteOrder NATIVE_BYTE_ORDER = ByteOrder.nativeOrder();
+    public static final ByteOrder NATIVE_BYTE_ORDER;
 
+    static {
+        ByteOrder nativeOrder = ByteOrder.nativeOrder();
+        if (Boolean.getBoolean("net.jpountz.lz4.test.flipByteOrder")) {
+            NATIVE_BYTE_ORDER = nativeOrder != ByteOrder.LITTLE_ENDIAN ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN;
+        } else {
+            NATIVE_BYTE_ORDER = nativeOrder;
+        }
+    }
 }

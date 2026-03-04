@@ -58,6 +58,9 @@ tasks.test {
     useJUnitPlatform()
 
     systemProperty("net.jpountz.lz4.test.tempDir", testTempDir.get().asFile.absolutePath)
+    if (project.findProperty("net.jpountz.lz4.test.flipByteOrder")?.toString().equals("true", true)) {
+        systemProperty("net.jpountz.lz4.test.flipByteOrder", true)
+    }
 
     if (project.findProperty("net.jpountz.lz4.test.fuzz")?.toString().equals("true", true)) {
         environment("JAZZER_FUZZ", "1")
