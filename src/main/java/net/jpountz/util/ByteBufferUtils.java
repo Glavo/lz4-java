@@ -97,10 +97,7 @@ public enum ByteBufferUtils {
     }
 
     public static int readShortLE(ByteBuffer buf, int i) {
-        short value = buf.getShort(i);
-        if (buf.order() == ByteOrder.BIG_ENDIAN){
-            value = Short.reverseBytes(value);
-        }
-        return Short.toUnsignedInt(value);
+        assert buf.order() == ByteOrder.LITTLE_ENDIAN;
+        return Short.toUnsignedInt(buf.getShort(i));
     }
 }
