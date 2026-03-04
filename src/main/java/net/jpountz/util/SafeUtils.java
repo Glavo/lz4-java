@@ -16,13 +16,29 @@ package net.jpountz.util;
  * limitations under the License.
  */
 
-import java.nio.ByteOrder;
+import java.lang.invoke.VarHandle;
+
+import static java.lang.invoke.MethodHandles.byteArrayViewVarHandle;
+import static java.nio.ByteOrder.BIG_ENDIAN;
+import static java.nio.ByteOrder.LITTLE_ENDIAN;
 
 /**
  * <b>FOR INTERNAL USE ONLY</b>
  */
 public enum SafeUtils {
     ;
+
+    public static final VarHandle SHORT_LE = byteArrayViewVarHandle(short[].class, LITTLE_ENDIAN);
+    public static final VarHandle INT_LE = byteArrayViewVarHandle(int[].class, LITTLE_ENDIAN);
+    public static final VarHandle LONG_LE = byteArrayViewVarHandle(long[].class, LITTLE_ENDIAN);
+
+    public static final VarHandle SHORT_BE = byteArrayViewVarHandle(short[].class, BIG_ENDIAN);
+    public static final VarHandle INT_BE = byteArrayViewVarHandle(int[].class, BIG_ENDIAN);
+    public static final VarHandle LONG_BE = byteArrayViewVarHandle(long[].class, BIG_ENDIAN);
+
+    public static final VarHandle SHORT_NE = Utils.NATIVE_BYTE_ORDER == LITTLE_ENDIAN ? SHORT_LE : SHORT_BE;
+    public static final VarHandle INT_NE = Utils.NATIVE_BYTE_ORDER == LITTLE_ENDIAN ? INT_LE : INT_BE;
+    public static final VarHandle LONG_NE = Utils.NATIVE_BYTE_ORDER == LITTLE_ENDIAN ? LONG_LE : LONG_BE;
 
     public static void checkRange(byte[] buf, int off) {
         if (off < 0 || off >= buf.length) {
@@ -49,29 +65,31 @@ public enum SafeUtils {
     }
 
     public static int readIntBE(byte[] buf, int i) {
-        return ((buf[i] & 0xFF) << 24) | ((buf[i + 1] & 0xFF) << 16) | ((buf[i + 2] & 0xFF) << 8) | (buf[i + 3] & 0xFF);
+        return (int) INT_BE.get(buf, i);
     }
 
     public static int readIntLE(byte[] buf, int i) {
-        return (buf[i] & 0xFF) | ((buf[i + 1] & 0xFF) << 8) | ((buf[i + 2] & 0xFF) << 16) | ((buf[i + 3] & 0xFF) << 24);
+        return (int) INT_LE.get(buf, i);
     }
 
     public static int readInt(byte[] buf, int i) {
-        if (Utils.NATIVE_BYTE_ORDER == ByteOrder.BIG_ENDIAN) {
-            return readIntBE(buf, i);
-        } else {
-            return readIntLE(buf, i);
-        }
+        return (int) INT_NE.get(buf, i);
     }
 
     public static long readLongLE(byte[] buf, int i) {
-        return (buf[i] & 0xFFL) | ((buf[i + 1] & 0xFFL) << 8) | ((buf[i + 2] & 0xFFL) << 16) | ((buf[i + 3] & 0xFFL) << 24)
-                | ((buf[i + 4] & 0xFFL) << 32) | ((buf[i + 5] & 0xFFL) << 40) | ((buf[i + 6] & 0xFFL) << 48) | ((buf[i + 7] & 0xFFL) << 56);
+        return (long) LONG_LE.get(buf, i);
+    }
+
+    public static long readLong(byte[] buf, int i) {
+        return (long) LONG_NE.get(buf, i);
+    }
+
+    public static void writeLong(byte[] buf, int i, long v) {
+        LONG_NE.set(buf, i, v);
     }
 
     public static void writeShortLE(byte[] buf, int off, int v) {
-        buf[off++] = (byte) v;
-        buf[off++] = (byte) (v >>> 8);
+        SHORT_LE.set(buf, off, (short) v);
     }
 
     public static void writeInt(int[] buf, int off, int v) {
@@ -91,7 +109,7 @@ public enum SafeUtils {
     }
 
     public static int readShortLE(byte[] buf, int i) {
-        return (buf[i] & 0xFF) | ((buf[i + 1] & 0xFF) << 8);
+        return Short.toUnsignedInt((short) SHORT_LE.get(buf, i));
     }
 
     public static int readShort(short[] buf, int off) {
