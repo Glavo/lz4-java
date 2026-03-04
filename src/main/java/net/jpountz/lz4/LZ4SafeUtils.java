@@ -20,10 +20,7 @@ import net.jpountz.util.SafeUtils;
 
 import java.util.Arrays;
 
-import static net.jpountz.lz4.LZ4Constants.LAST_LITERALS;
-import static net.jpountz.lz4.LZ4Constants.ML_BITS;
-import static net.jpountz.lz4.LZ4Constants.ML_MASK;
-import static net.jpountz.lz4.LZ4Constants.RUN_MASK;
+import static net.jpountz.lz4.LZ4Constants.*;
 import static net.jpountz.lz4.LZ4Utils.lengthOfEncodedInteger;
 import static net.jpountz.lz4.LZ4Utils.notEnoughSpace;
 import static net.jpountz.lz4.LZ4Utils.sequenceLength;
@@ -42,16 +39,48 @@ enum LZ4SafeUtils {
     }
 
     static void wildIncrementalCopy(byte[] dest, int matchOff, int dOff, int matchCopyEnd) {
-        do {
-            copy8Bytes(dest, matchOff, dest, dOff);
-            matchOff += 8;
+        if (dOff - matchOff < 4) {
+            for (int i = 0; i < 4; ++i) {
+                dest[dOff + i] = dest[matchOff + i];
+            }
+            dOff += 4;
+            matchOff += 4;
+            int dec = 0;
+            assert dOff >= matchOff && dOff - matchOff < 8;
+            switch (dOff - matchOff) {
+                case 1:
+                    matchOff -= 3;
+                    break;
+                case 2:
+                    matchOff -= 2;
+                    break;
+                case 3:
+                    matchOff -= 3;
+                    dec = -1;
+                    break;
+                case 5:
+                    dec = 1;
+                    break;
+                case 6:
+                    dec = 2;
+                    break;
+                case 7:
+                    dec = 3;
+                    break;
+                default:
+                    break;
+            }
+            SafeUtils.writeInt(dest, dOff, SafeUtils.readInt(dest, matchOff));
+            dOff += 4;
+            matchOff -= dec;
+        } else if (dOff - matchOff < COPY_LENGTH) {
+            SafeUtils.writeLong(dest, dOff, SafeUtils.readLong(dest, matchOff));
+            dOff += dOff - matchOff;
+        }
+        while (dOff < matchCopyEnd) {
+            SafeUtils.writeLong(dest, dOff, SafeUtils.readLong(dest, matchOff));
             dOff += 8;
-        } while (dOff < matchCopyEnd);
-    }
-
-    static void copy8Bytes(byte[] src, int sOff, byte[] dest, int dOff) {
-        for (int i = 0; i < 8; ++i) {
-            dest[dOff + i] = src[sOff + i];
+            matchOff += 8;
         }
     }
 
@@ -74,12 +103,8 @@ enum LZ4SafeUtils {
     }
 
     static void wildArraycopy(byte[] src, int sOff, byte[] dest, int dOff, int len) {
-        try {
-            for (int i = 0; i < len; i += 8) {
-                copy8Bytes(src, sOff + i, dest, dOff + i);
-            }
-        } catch (ArrayIndexOutOfBoundsException e) {
-            throw new LZ4Exception("Malformed input at offset " + sOff);
+        for (int i = 0; i < len; i += 8) {
+            SafeUtils.writeLong(dest, dOff + i, SafeUtils.readLong(src, sOff + i));
         }
     }
 
@@ -152,26 +177,6 @@ enum LZ4SafeUtils {
         }
         dest[dOff++] = (byte) len;
         return dOff;
-    }
-
-    static class Match {
-        int start, ref, len;
-
-        void fix(int correction) {
-            start += correction;
-            ref += correction;
-            len -= correction;
-        }
-
-        int end() {
-            return start + len;
-        }
-    }
-
-    static void copyTo(Match m1, Match m2) {
-        m2.len = m1.len;
-        m2.start = m1.start;
-        m2.ref = m1.ref;
     }
 
 }

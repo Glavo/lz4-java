@@ -76,6 +76,10 @@ public enum SafeUtils {
         return (int) INT_NE.get(buf, i);
     }
 
+    public static void writeInt(byte[] buf, int i, int v) {
+        INT_NE.set(buf, i, v);
+    }
+
     public static long readLongLE(byte[] buf, int i) {
         return (long) LONG_LE.get(buf, i);
     }
