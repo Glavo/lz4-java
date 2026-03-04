@@ -92,12 +92,18 @@ public enum ByteBufferUtils {
     }
 
     public static void writeShortLE(ByteBuffer dest, int off, int i) {
-        dest.put(off, (byte) i);
-        dest.put(off + 1, (byte) (i >>> 8));
+        short value = (short) i;
+        if (dest.order() == ByteOrder.BIG_ENDIAN) {
+            value = Short.reverseBytes(value);
+        }
+        dest.putShort(off, value);
     }
 
     public static int readShortLE(ByteBuffer buf, int i) {
-        assert buf.order() == ByteOrder.LITTLE_ENDIAN;
-        return Short.toUnsignedInt(buf.getShort(i));
+        short value = buf.getShort(i);
+        if (buf.order() == ByteOrder.BIG_ENDIAN) {
+            value = Short.reverseBytes(value);
+        }
+        return Short.toUnsignedInt(value);
     }
 }
