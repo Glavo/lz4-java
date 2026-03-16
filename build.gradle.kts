@@ -13,7 +13,7 @@ plugins {
 }
 
 group = "org.glavo"
-version = "1.10.4.1" // + "-SNAPSHOT"
+version = "1.10.4.2" + "-SNAPSHOT"
 description = "LZ4 Java implementation"
 
 repositories {
