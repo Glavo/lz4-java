@@ -19,3 +19,21 @@ This project requires Java 17 or higher. It uses APIs such as `VarHandle` to acc
 and xxHash algorithms, so it should be faster than the `JavaSafe` version
 of [yawkat/lz4-java](https://github.com/yawkat/lz4-java).
 
+## Download
+
+Gradle:
+
+```kotlin
+dependencies {
+    implementation("org.glavo:lz4-java:1.10.4.1")
+}
+```
+
+Maven:
+```xml
+<dependency>
+    <groupId>org.glavo</groupId>
+    <artifactId>lz4-java</artifactId>
+    <version>1.10.4.1</version>
+</dependency>
+```
